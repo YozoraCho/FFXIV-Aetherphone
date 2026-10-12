@@ -21,6 +21,7 @@ internal sealed class PhoneWindow : Window
     private int recenterFrames;
     private int pendingFrames;
     private int rotatePinFrames;
+    private MinimizePhase previousPhase;
     private bool dockGrowLeft;
     private bool dockGrowUp;
     private bool turning;
@@ -183,6 +184,12 @@ internal sealed class PhoneWindow : Window
         var landscapeWidth = Components.PhoneBounds.LandscapeWidth(configuration);
         var turn = shell.Turn;
         var phase = shell.MinimizePhase;
+        if (phase == MinimizePhase.None && previousPhase != MinimizePhase.None)
+        {
+            RequestPosition(maximizedPosition);
+        }
+
+        previousPhase = phase;
         var minimized = phase == MinimizePhase.Minimized;
         var landscape = turn.ShowsLandscape;
         var minimizedZoom = shell.MinimizedZoom;
