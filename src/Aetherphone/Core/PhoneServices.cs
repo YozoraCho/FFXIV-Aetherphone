@@ -8,6 +8,7 @@ using Aetherphone.Core.Conduct;
 using Aetherphone.Core.Confirm;
 using Aetherphone.Core.Crypto;
 using Aetherphone.Core.Fishing;
+using Aetherphone.Core.Gardening;
 using Aetherphone.Core.Game;
 using Aetherphone.Core.GameChat;
 using Aetherphone.Core.Games;
@@ -70,6 +71,8 @@ internal sealed class PhoneServices : IDisposable
     public required HousingReminderService HousingReminders { get; init; }
     public required FishingCatalog Fishing { get; init; }
     public required FishingAlerts FishingAlerts { get; init; }
+    public required GardenCatalog Garden { get; init; }
+    public required GardenAlerts GardenAlerts { get; init; }
     public required ITextureProvider Textures { get; init; }
     public required Windows.Components.ArtworkCache Artwork { get; init; }
     public required WeatherService Weather { get; init; }
@@ -404,6 +407,10 @@ internal sealed class PhoneServices : IDisposable
             Plugin.PluginInterface.AssemblyLocation.DirectoryName ?? string.Empty);
         var fishingAlerts = new FishingAlerts(configuration, fishing, notifications, clientState, framework,
             installer.Gate(FishingCatalog.AppId));
+        var garden = new GardenCatalog(dataManager,
+            Plugin.PluginInterface.AssemblyLocation.DirectoryName ?? string.Empty);
+        var gardenAlerts = new GardenAlerts(configuration, garden, notifications, framework,
+            installer.Gate(GardenCatalog.AppId));
         var housingReminders = new HousingReminderService(configuration, framework, notifications, housing.Watch,
             housingGate);
         var confirm = new ConfirmService();
@@ -510,6 +517,8 @@ internal sealed class PhoneServices : IDisposable
             HousingReminders = housingReminders,
             Fishing = fishing,
             FishingAlerts = fishingAlerts,
+            Garden = garden,
+            GardenAlerts = gardenAlerts,
             Textures = textures,
             Artwork = new Windows.Components.ArtworkCache(textures),
             Weather = weather,
@@ -704,6 +713,7 @@ internal sealed class PhoneServices : IDisposable
         Activity.Dispose();
         HousingReminders.Dispose();
         FishingAlerts.Dispose();
+        GardenAlerts.Dispose();
         Housing.Dispose();
         Venues.Dispose();
         Hunts.Dispose();

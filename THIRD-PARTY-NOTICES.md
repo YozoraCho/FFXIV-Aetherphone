@@ -450,3 +450,21 @@ with accents normalized by `tools/build-word-banks.ps1`.
 - License (content): Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0),
   https://creativecommons.org/licenses/by-sa/4.0/. Those four derived word-bank files are likewise available
   under CC BY-SA 4.0.
+
+## FFXIV Crossbreed Helper
+
+The Greenthumb seed data (`src/Aetherphone/Gardening/Seeds.json`) and its crossbreed route finder
+(`src/Aetherphone/Core/Gardening/CrossbreedPlanner.cs`) are derived from the FFXIV Crossbreed Helper by Nick75.
+
+- Copyright (c) 2024 Nick75
+- License: MIT. Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+  and associated documentation files (the "Software"), to deal in the Software without restriction, including
+  without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+  of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+  conditions: The above copyright notice and this permission notice shall be included in all copies or
+  substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+  AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- Source: https://github.com/nick75g/FFXIV-Crossbreed-Helper

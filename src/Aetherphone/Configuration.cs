@@ -10,6 +10,7 @@ using Aetherphone.Core.ControlCenter;
 using Aetherphone.Core.Dailies;
 using Aetherphone.Core.Feedback;
 using Aetherphone.Core.Fishing;
+using Aetherphone.Core.Gardening;
 using Aetherphone.Core.GameChat;
 using Aetherphone.Core.Games;
 using Aetherphone.Core.Geography;
@@ -607,6 +608,9 @@ internal sealed class Configuration : IPluginConfiguration, IHomeConfiguration, 
     public List<uint> FishingAlarms { get; set; } = new();
     public int FishingAlertLeadMinutes { get; set; } = Core.Fishing.FishingAlerts.DefaultLeadMinutes;
     public List<FishingVoyageReminder> FishingVoyageReminders { get; set; } = new();
+    public List<GardenPatch> GreenthumbPatches { get; set; } = new();
+    public List<string> GreenthumbOwnedSeeds { get; set; } = new();
+    public bool GreenthumbIncludeGatherable { get; set; } = true;
     public DateTime? TimerEndsAtUtc { get; set; }
     public int TimerDurationSeconds { get; set; }
     public bool TimerNotified { get; set; }

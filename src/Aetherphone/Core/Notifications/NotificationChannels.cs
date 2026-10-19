@@ -39,6 +39,7 @@ internal static class NotificationChannels
         new("casino", L.Apps.Casino, AppAccents.For("casino")),
         new("hunts", L.Apps.Hunts, AppAccents.For("hunts")),
         new("fishing", L.Apps.Fishing, AppAccents.For("fishing")),
+        new("greenthumb", L.Apps.Greenthumb, AppAccents.For("greenthumb")),
     };
 
     public static bool Contains(string appId)

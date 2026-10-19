@@ -38,6 +38,7 @@ internal static class AppAccents
         ["shortcuts"] = AccentRing.Indigo,
         ["dailies"] = AccentRing.Teal,
         ["fishing"] = AccentRing.Teal,
+        ["greenthumb"] = AccentRing.Emerald,
         ["notifications"] = AccentRing.Red,
         ["settings"] = AccentRing.Slate,
         ["appstore"] = AccentRing.Azure,

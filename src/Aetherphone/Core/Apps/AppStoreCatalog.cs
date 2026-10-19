@@ -101,6 +101,8 @@ internal static class AppStoreCatalog
             StoreCategory.Utilities),
         ["feedback"] = new(L.Apps.Feedback, L.StoreCopy.FeedbackSub, L.StoreCopy.FeedbackBody,
             StoreCategory.Utilities),
+        ["greenthumb"] = new(L.Apps.Greenthumb, L.StoreCopy.GreenthumbSub, L.StoreCopy.GreenthumbBody,
+            StoreCategory.Utilities),
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
     public static ImmutableArray<string> AppIds => Entries.Keys;

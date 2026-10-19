@@ -192,6 +192,26 @@ internal static class AppPalettes
         HoverWash = theme.HoverWash,
     };
 
+    public static AppPalette Greenthumb(PhoneTheme theme) => new()
+    {
+        Accent = AppAccents.For("greenthumb"),
+        TitleInk = theme.TextStrong,
+        BodyInk = theme.TextStrong,
+        MutedInk = theme.TextMuted,
+        HeaderInk = theme.TextMuted,
+        HeadingInk = theme.TextStrong,
+        BackdropTop = Palette.Mix(theme.AppBackground, theme.GroupedCard, 0.55f),
+        BackdropBottom = theme.AppBackground,
+        BloomTop = default,
+        BloomBottom = default,
+        CardFill = theme.GroupedCard,
+        CardStroke = theme.Separator,
+        FieldSurface = Surfaces.Fill(theme.TextStrong, FillLevel.Tertiary),
+        HoverTint = Palette.WithAlpha(theme.TextStrong, 0.06f),
+        Hairline = theme.Hairline,
+        HoverWash = theme.HoverWash,
+    };
+
     public static AppPalette PhotosThemed(PhoneTheme theme) => new()
     {
         Accent = AppAccents.For("photos"),

@@ -9,6 +9,7 @@ using Aetherphone.Apps.Clock;
 using Aetherphone.Apps.Collections;
 using Aetherphone.Apps.Dailies;
 using Aetherphone.Apps.Fishing;
+using Aetherphone.Apps.Greenthumb;
 using Aetherphone.Apps.Games;
 using Aetherphone.Apps.Health;
 using Aetherphone.Apps.Housing;
@@ -136,6 +137,7 @@ internal static class AppRegistry
         apps.Add(new TimersApp(services.Configuration, services.GameTimers));
         apps.Add(new DailiesApp(services.Dailies));
         apps.Add(new FishingApp(services.Fishing, services.FishingAlerts, services.Textures));
+        apps.Add(new GreenthumbApp(services.Configuration, services.Garden, services.GardenAlerts, services.Confirm));
         apps.Add(new GamesApp(services.GameStats, services.GameData, services.Textures, services.Coins,
             services.CoinSessions, services.GameRooms, services.Configuration, services.Leaderboard,
             services.RemoteImages, services.Lodestone, services.MoogleClicker, services.SettingsLauncher,
