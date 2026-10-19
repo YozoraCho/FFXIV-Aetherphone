@@ -360,6 +360,7 @@ internal static class L
         public static readonly LocString Notifications = new("app.notifications", "Notifications");
         public static readonly LocString News = new("app.news", "News");
         public static readonly LocString Fishing = new("app.fishing", "Fishing");
+        public static readonly LocString Greenthumb = new("app.greenthumb", "Greenthumb");
         public static readonly LocString Maps = new("app.maps", "Maps");
         public static readonly LocString Collections = new("app.collections", "Collections");
         public static readonly LocString Inventory = new("app.inventory", "Inventory");
@@ -612,6 +613,10 @@ internal static class L
         public static readonly LocString FishingSub = new("storeCopy.fishingSub", "Routes and windows");
         public static readonly LocString FishingBody = new("storeCopy.fishingBody",
             "Ocean fishing voyages with their routes and blue fish, plus big fish windows with an alert before they open.");
+        public static readonly LocString GreenthumbSub = new("storeCopy.greenthumbSub",
+            "Gardening and crossbreeding");
+        public static readonly LocString GreenthumbBody = new("storeCopy.greenthumbBody",
+            "Track your garden beds, get tending and harvest reminders, and plan crossbreeds to the seed you want.");
         public static readonly LocString SkywatcherSub = new("storeCopy.skywatcherSub", "Weather ahead");
         public static readonly LocString SkywatcherBody = new("storeCopy.skywatcherBody",
             "Living skies for every zone, the odds of each weather and your saved zones, so you are there when the weather you need rolls in.");
@@ -8493,6 +8498,86 @@ internal static class L
         public static readonly LocString CactpotNotice = new("timers.cactpotNotice", "The drawing is starting");
         public static readonly LocString NotifyOn = new("timers.notifyOn", "Notifications on");
         public static readonly LocString NotifyOff = new("timers.notifyOff", "Notifications off");
+    }
+
+    internal static class Greenthumb
+    {
+        public static readonly LocString GardenTab = new("greenthumb.gardenTab", "Garden");
+        public static readonly LocString PlannerTab = new("greenthumb.plannerTab", "Planner");
+        public static readonly LocString SeedsTab = new("greenthumb.seedsTab", "Seeds");
+        public static readonly LocString AddPatch = new("greenthumb.addPatch", "Add a patch");
+        public static readonly LocString NoPatchesTitle = new("greenthumb.noPatchesTitle", "No patches yet");
+        public static readonly LocString NoPatchesHint = new("greenthumb.noPatchesHint", "Add a garden patch or flowerpot to start tracking your beds.");
+        public static readonly LocString RoundPatch = new("greenthumb.roundPatch", "Round patch");
+        public static readonly LocString OblongPatch = new("greenthumb.oblongPatch", "Oblong patch");
+        public static readonly LocString DeluxePatch = new("greenthumb.deluxePatch", "Deluxe patch");
+        public static readonly LocString Flowerpot = new("greenthumb.flowerpot", "Flowerpot");
+        public static readonly LocString PlantedOf = new("greenthumb.plantedOf", "{0} of {1} planted");
+        public static readonly LocString NeedsAttention = new("greenthumb.needsAttention", "{0} need attention");
+        public static readonly LocString EmptyBed = new("greenthumb.emptyBed", "Empty");
+        public static readonly LocString Ready = new("greenthumb.ready", "Ready");
+        public static readonly LocString TendSoon = new("greenthumb.tendSoon", "Tend soon");
+        public static readonly LocString Wilting = new("greenthumb.wilting", "Wilting");
+        public static readonly LocString Growing = new("greenthumb.growing", "Growing");
+        public static readonly LocString BedTitle = new("greenthumb.bedTitle", "Bed {0}");
+        public static readonly LocString Seed = new("greenthumb.seed", "Seed");
+        public static readonly LocString Planted = new("greenthumb.planted", "Planted");
+        public static readonly LocString Tended = new("greenthumb.tended", "Last tended");
+        public static readonly LocString Wilts = new("greenthumb.wilts", "Wilts");
+        public static readonly LocString MarkTended = new("greenthumb.markTended", "Mark tended");
+        public static readonly LocString TendAll = new("greenthumb.tendAll", "Mark all tended");
+        public static readonly LocString GrowingTime = new("greenthumb.growingTime", "Growing time");
+        public static readonly LocString GrowingTimeHint = new("greenthumb.growingTimeHint", "Set the seed's growing time to get a reminder when it is ready to harvest.");
+        public static readonly LocString NotSet = new("greenthumb.notSet", "Not set");
+        public static readonly LocString ClearBed = new("greenthumb.clearBed", "Clear bed");
+        public static readonly LocString ClearBedConfirm = new("greenthumb.clearBedConfirm", "Clear this bed? Its timers are removed from Greenthumb.");
+        public static readonly LocString Clear = new("greenthumb.clear", "Clear");
+        public static readonly LocString Keep = new("greenthumb.keep", "Keep");
+        public static readonly LocString RemovePatch = new("greenthumb.removePatch", "Remove patch");
+        public static readonly LocString RemovePatchConfirm = new("greenthumb.removePatchConfirm", "Remove this patch and all its beds from Greenthumb? Nothing changes in the game.");
+        public static readonly LocString Remove = new("greenthumb.remove", "Remove");
+        public static readonly LocString CrossSection = new("greenthumb.crossSection", "Crossbreeding");
+        public static readonly LocString CrossWith = new("greenthumb.crossWith", "With bed {0}");
+        public static readonly LocString NoCross = new("greenthumb.noCross", "No known cross with the beds beside it.");
+        public static readonly LocString NoCrossPot = new("greenthumb.noCrossPot", "Flowerpots can't crossbreed.");
+        public static readonly LocString ChooseSeed = new("greenthumb.chooseSeed", "Choose a seed");
+        public static readonly LocString SearchSeeds = new("greenthumb.searchSeeds", "Search seeds");
+        public static readonly LocString MySeeds = new("greenthumb.mySeeds", "My seeds");
+        public static readonly LocString AllSeeds = new("greenthumb.allSeeds", "All seeds");
+        public static readonly LocString MakeSeed = new("greenthumb.makeSeed", "Make a seed");
+        public static readonly LocString WhatCanIMake = new("greenthumb.whatCanIMake", "What can I make");
+        public static readonly LocString WhereToStart = new("greenthumb.whereToStart", "Where to start");
+        public static readonly LocString TargetSeed = new("greenthumb.targetSeed", "Target seed");
+        public static readonly LocString Choose = new("greenthumb.choose", "Choose");
+        public static readonly LocString IncludeGatherable = new("greenthumb.includeGatherable", "Include gatherable seeds");
+        public static readonly LocString IncludeGatherableHint = new("greenthumb.includeGatherableHint", "Counts seeds you can gather or buy as one step each.");
+        public static readonly LocString StartingFrom = new("greenthumb.startingFrom", "Starting from");
+        public static readonly LocString OwnedCount = new("greenthumb.ownedCount", "{0} owned");
+        public static readonly LocString RouteChip = new("greenthumb.routeChip", "Route {0}");
+        public static readonly LocString CrossStep = new("greenthumb.crossStep", "Cross {0} + {1}");
+        public static readonly LocString Gives = new("greenthumb.gives", "Gives {0}");
+        public static readonly LocString GatherStep = new("greenthumb.gatherStep", "Get {0}");
+        public static readonly LocString AlreadyOwned = new("greenthumb.alreadyOwned", "You already have this seed.");
+        public static readonly LocString Unreachable = new("greenthumb.unreachable", "No route from your seeds.");
+        public static readonly LocString UnreachableHint = new("greenthumb.unreachableHint", "Try including gatherable seeds.");
+        public static readonly LocString NoOwnedHint = new("greenthumb.noOwnedHint", "Tick the seeds you have in the Seeds tab, and the planner starts from those.");
+        public static readonly LocString Depth = new("greenthumb.depth", "Up to");
+        public static readonly LocString NothingNew = new("greenthumb.nothingNew", "Nothing new within that many steps.");
+        public static readonly LocString CanGather = new("greenthumb.canGather", "This seed can be gathered or bought.");
+        public static readonly LocString StarterOption = new("greenthumb.starterOption", "Option {0}");
+        public static readonly LocString CrossOnly = new("greenthumb.crossOnly", "Crossbreed only");
+        public static readonly LocString NoSourceInfo = new("greenthumb.noSourceInfo", "No source information for this seed.");
+        public static readonly LocString FilterOwned = new("greenthumb.filterOwned", "Owned");
+        public static readonly LocString FilterGatherable = new("greenthumb.filterGatherable", "Gatherable");
+        public static readonly LocString NoMatch = new("greenthumb.noMatch", "No seeds match");
+        public static readonly LocString LoadFailedTitle = new("greenthumb.loadFailedTitle", "Seed data did not load");
+        public static readonly LocString LoadFailedHint = new("greenthumb.loadFailedHint", "Try again in a moment.");
+        public static readonly LocString ReadyAlert = new("greenthumb.readyAlert", "Ready to harvest in {0}, bed {1}.");
+        public static readonly LocString TendAlert = new("greenthumb.tendAlert", "Needs tending soon in {0}, bed {1}.");
+        public static readonly LocPlural Steps = new("greenthumb.steps", "{0} step", "{0} steps");
+        public static readonly LocPlural Routes = new("greenthumb.routes", "{0} route found", "{0} routes found");
+        public static readonly LocPlural Days = new("greenthumb.days", "{0} day", "{0} days");
+        public static readonly LocPlural Hours = new("greenthumb.hours", "{0} hour", "{0} hours");
     }
 
     internal static class Fishing

@@ -77,6 +77,7 @@ const map = {
   collections: icon("trophy", "colour", "Indigo"),
   inventory: icon("backpack", "colour", "Orange"),
   fishing: icon("fish", "colour", "Teal"),
+  greenthumb: icon("plant", "colour", "Emerald"),
   clock: icon("clock", "graphite", "Red", { round: true, ink: WHITE }),
   notes: icon("note", "paper", "Gold"),
   calculator: icon("calculator", "graphite", "Slate", { ink: WHITE }),
