@@ -21,6 +21,12 @@ public sealed class GreenthumbPlannerTests
         Assert.Equal(24, book.Seeds[onion].WiltHours);
         Assert.True(book.TryIndex("Chamomile Seeds", out var chamomile));
         Assert.Equal(48, book.Seeds[chamomile].WiltHours);
+        Assert.Equal(240, book.Seeds[onion].GrowHours);
+        Assert.Equal(120, book.Seeds[chamomile].GrowHours);
+        foreach (var seed in book.Seeds)
+        {
+            Assert.True(seed.GrowHours > 0, seed.Key);
+        }
     }
 
     [Fact]
@@ -108,7 +114,7 @@ public sealed class GreenthumbPlannerTests
     {
         var planted = new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc);
         var bed = new GardenBed();
-        bed.Plant("Gysahl Greens Seeds", planted);
+        bed.Plant("Gysahl Greens Seeds", 0, planted);
 
         Assert.False(GardenTimers.NeedsTending(bed, 24, planted.AddHours(19)));
         Assert.True(GardenTimers.NeedsTending(bed, 24, planted.AddHours(21)));

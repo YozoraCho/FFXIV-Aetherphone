@@ -10,7 +10,7 @@ using Dalamud.Interface;
 
 namespace Aetherphone.Apps.Greenthumb;
 
-internal sealed partial class GreenthumbApp : IPhoneApp
+internal sealed partial class GreenthumbApp : IResumableApp
 {
     private const int TabCount = 3;
     private const long RefreshMilliseconds = 1000;
@@ -69,6 +69,11 @@ internal sealed partial class GreenthumbApp : IPhoneApp
     public void OnOpened()
     {
         router.Reset();
+        OnResumed();
+    }
+
+    public void OnResumed()
+    {
         catalog.EnsureLoaded();
         alerts.Refresh();
         MarkDirty();
@@ -77,6 +82,12 @@ internal sealed partial class GreenthumbApp : IPhoneApp
     public void OnClosed()
     {
         kindSheet.Close();
+        harvestSheet.Close();
+        if (patchNameDirty)
+        {
+            patchNameDirty = false;
+            SaveGarden();
+        }
     }
 
     public void Draw(in PhoneContext context)
@@ -92,8 +103,11 @@ internal sealed partial class GreenthumbApp : IPhoneApp
         SyncOwned();
         TickRefresh();
         kindSheet.Gate();
+        harvestSheet.Gate();
         router.Draw(context.Content, AppSkin.Transparent, ImGui.GetIO().DeltaTime, drawView);
         DrawKindSheet(screen);
+        DrawHarvestSheet(screen);
+        SavePatchNameWhenIdle();
     }
 
     private void DrawView(GreenthumbRoute route, Rect area, int depth)

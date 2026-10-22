@@ -8527,7 +8527,7 @@ internal static class L
         public static readonly LocString MarkTended = new("greenthumb.markTended", "Mark tended");
         public static readonly LocString TendAll = new("greenthumb.tendAll", "Mark all tended");
         public static readonly LocString GrowingTime = new("greenthumb.growingTime", "Growing time");
-        public static readonly LocString GrowingTimeHint = new("greenthumb.growingTimeHint", "Set the seed's growing time to get a reminder when it is ready to harvest.");
+        public static readonly LocString GrowingTimeHint = new("greenthumb.growingTimeHint", "Filled in from the seed's usual growing time. Change it if yours is different.");
         public static readonly LocString NotSet = new("greenthumb.notSet", "Not set");
         public static readonly LocString ClearBed = new("greenthumb.clearBed", "Clear bed");
         public static readonly LocString ClearBedConfirm = new("greenthumb.clearBedConfirm", "Clear this bed? Its timers are removed from Greenthumb.");
@@ -8574,6 +8574,10 @@ internal static class L
         public static readonly LocString LoadFailedHint = new("greenthumb.loadFailedHint", "Try again in a moment.");
         public static readonly LocString ReadyAlert = new("greenthumb.readyAlert", "Ready to harvest in {0}, bed {1}.");
         public static readonly LocString TendAlert = new("greenthumb.tendAlert", "Needs tending soon in {0}, bed {1}.");
+        public static readonly LocString PatchName = new("greenthumb.patchName", "Name");
+        public static readonly LocString Harvest = new("greenthumb.harvest", "Harvest");
+        public static readonly LocString HarvestPrompt = new("greenthumb.harvestPrompt", "Did this harvest give you new seeds?");
+        public static readonly LocString NoNewSeeds = new("greenthumb.noNewSeeds", "No new seeds");
         public static readonly LocPlural Steps = new("greenthumb.steps", "{0} step", "{0} steps");
         public static readonly LocPlural Routes = new("greenthumb.routes", "{0} route found", "{0} routes found");
         public static readonly LocPlural Days = new("greenthumb.days", "{0} day", "{0} days");

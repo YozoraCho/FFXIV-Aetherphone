@@ -11,6 +11,7 @@ internal sealed class GardenSeed
     public required SeedPair[] Crosses { get; init; }
     public required int[][] Starters { get; init; }
     public required int WiltHours { get; init; }
+    public required int GrowHours { get; init; }
 
     public bool CanGather => Sources.Length > 0;
 
@@ -79,6 +80,7 @@ internal sealed class SeedBook
                 Crosses = ReadPairs(element.GetProperty("crosses")),
                 Starters = ReadSets(element.GetProperty("starters")),
                 WiltHours = element.GetProperty("wiltHours").GetInt32(),
+                GrowHours = element.TryGetProperty("growHours", out var grow) ? grow.GetInt32() : 0,
             };
             index++;
         }

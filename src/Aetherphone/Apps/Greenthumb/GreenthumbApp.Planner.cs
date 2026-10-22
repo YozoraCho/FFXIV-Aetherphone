@@ -38,7 +38,8 @@ internal sealed partial class GreenthumbApp
     private string[] stepTitles = Array.Empty<string>();
     private string[] stepSubtitles = Array.Empty<string>();
     private int[] reachable = Array.Empty<int>();
-    private string[] reachableValues = Array.Empty<string>();
+    private string[] reachableHeaders = Array.Empty<string>();
+    private int[] reachableStarts = Array.Empty<int>();
     private string[] reachableIds = Array.Empty<string>();
     private string[] starterHeaders = Array.Empty<string>();
     private string[][] starterNames = Array.Empty<string[]>();
@@ -190,25 +191,32 @@ internal sealed partial class GreenthumbApp
             return;
         }
 
-        var listCard = GroupCard.Begin(theme, reachable.Length);
-        for (var index = 0; index < reachable.Length; index++)
+        for (var group = 0; group < reachableHeaders.Length; group++)
         {
-            var listRow = listCard.NextRow();
-            if (!ImGui.IsRectVisible(listRow.Min, listRow.Max))
+            var start = reachableStarts[group];
+            var end = reachableStarts[group + 1];
+            SettingsSection.Header(reachableHeaders[group], theme);
+            var listCard = GroupCard.Begin(theme, end - start);
+            for (var index = start; index < end; index++)
             {
-                continue;
+                var listRow = listCard.NextRow();
+                if (!ImGui.IsRectVisible(listRow.Min, listRow.Max))
+                {
+                    continue;
+                }
+
+                if (SettingsRow.Disclosure(listRow, catalog.Name(reachable[index]), string.Empty, theme,
+                        reachableIds[index]))
+                {
+                    target = reachable[index];
+                    plannerMode = ModeMake;
+                    plannerDirty = true;
+                }
             }
 
-            if (SettingsRow.Disclosure(listRow, catalog.Name(reachable[index]), reachableValues[index], theme,
-                    reachableIds[index]))
-            {
-                target = reachable[index];
-                plannerMode = ModeMake;
-                plannerDirty = true;
-            }
+            listCard.End();
+            Gap(Metrics.Space.Lg);
         }
-
-        listCard.End();
     }
 
     private void DrawStart()
@@ -351,21 +359,42 @@ internal sealed partial class GreenthumbApp
         var costs = CrossbreedPlanner.Costs(catalog.Book, owned, gather);
         var found = CrossbreedPlanner.Reachable(catalog.Book, owned, depth, gather);
         var sorted = new List<int>(found.Length);
+        var headers = new List<string>();
+        var starts = new List<int>();
         var byName = catalog.SortedByName;
-        for (var nameIndex = 0; nameIndex < byName.Length; nameIndex++)
+        for (var steps = 1; steps <= depth; steps++)
         {
-            if (Array.IndexOf(found, byName[nameIndex]) >= 0)
+            var groupStart = sorted.Count;
+            for (var nameIndex = 0; nameIndex < byName.Length; nameIndex++)
             {
-                sorted.Add(byName[nameIndex]);
+                var seed = byName[nameIndex];
+                if (costs[seed] != steps || Array.IndexOf(found, seed) < 0)
+                {
+                    continue;
+                }
+
+                if (gather && catalog.Book.Seeds[seed].CanGather)
+                {
+                    continue;
+                }
+
+                sorted.Add(seed);
+            }
+
+            if (sorted.Count > groupStart)
+            {
+                headers.Add(Loc.Plural(L.Greenthumb.Steps, steps));
+                starts.Add(groupStart);
             }
         }
 
+        starts.Add(sorted.Count);
         reachable = sorted.ToArray();
-        reachableValues = new string[reachable.Length];
+        reachableHeaders = headers.ToArray();
+        reachableStarts = starts.ToArray();
         reachableIds = new string[reachable.Length];
         for (var index = 0; index < reachable.Length; index++)
         {
-            reachableValues[index] = Loc.Plural(L.Greenthumb.Steps, costs[reachable[index]]);
             reachableIds[index] = string.Concat("greenthumb.reach.", catalog.Book.Seeds[reachable[index]].Key);
         }
     }
