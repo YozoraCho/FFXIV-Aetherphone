@@ -166,10 +166,10 @@ internal sealed partial class GreenthumbApp
             return;
         }
 
-        var key = catalog.Book.Seeds[seed].Key;
-        if (!bed.IsPlanted || !string.Equals(bed.Seed, key, StringComparison.Ordinal))
+        var entry = catalog.Book.Seeds[seed];
+        if (!bed.IsPlanted || !string.Equals(bed.Seed, entry.Key, StringComparison.Ordinal))
         {
-            bed.Plant(key, DateTime.UtcNow);
+            bed.Plant(entry.Key, entry.GrowHours, DateTime.UtcNow);
             SaveGarden();
         }
 

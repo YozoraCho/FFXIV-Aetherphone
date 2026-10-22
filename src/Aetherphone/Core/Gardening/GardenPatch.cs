@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Aetherphone.Core.Gardening;
 
 internal enum GardenPatchKind : byte
@@ -18,14 +20,15 @@ internal sealed class GardenBed
     public bool ReadyNotified { get; set; }
     public bool TendNotified { get; set; }
 
+    [JsonIgnore]
     public bool IsPlanted => Seed.Length > 0 && PlantedAtUtc.HasValue;
 
-    public void Plant(string seed, DateTime nowUtc)
+    public void Plant(string seed, int growHours, DateTime nowUtc)
     {
         Seed = seed;
         PlantedAtUtc = nowUtc;
         TendedAtUtc = nowUtc;
-        GrowHours = 0;
+        GrowHours = growHours;
         ReadyNotified = false;
         TendNotified = false;
     }

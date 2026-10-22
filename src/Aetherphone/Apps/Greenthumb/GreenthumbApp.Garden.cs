@@ -20,6 +20,8 @@ internal sealed partial class GreenthumbApp
     private const float CellPaddingUnits = 8f;
     private const float CellRadiusUnits = 14f;
     private const float StepperHeightUnits = 32f;
+    private const int MaxPatchNameLength = 32;
+    private const int MaxCrossResults = 16;
 
     private static readonly GardenPatchKind[] KindOrder =
     {
@@ -28,6 +30,14 @@ internal sealed partial class GreenthumbApp
 
     private readonly ActionSheet kindSheet = new();
     private readonly ActionSheet.Item[] kindItems = new ActionSheet.Item[4];
+    private readonly ActionSheet harvestSheet = new();
+    private readonly int[] crossResults = new int[MaxCrossResults];
+    private ActionSheet.Item[] harvestItems = Array.Empty<ActionSheet.Item>();
+    private int[] harvestSeeds = Array.Empty<int>();
+    private int crossResultCount;
+    private string patchNameDraft = string.Empty;
+    private Guid patchNameId;
+    private bool patchNameDirty;
     private readonly Action decrementDays;
     private readonly Action incrementDays;
     private readonly Action decrementHours;
@@ -234,6 +244,8 @@ internal sealed partial class GreenthumbApp
         {
             DrawBedGrid(patch);
             Gap(Metrics.Space.Xl);
+            DrawPatchName(patch);
+            Gap(Metrics.Space.Lg);
             var hasPlanted = HasPlanted(patch);
             var card = GroupCard.Begin(theme, hasPlanted ? 2 : 1);
             if (hasPlanted && SettingsRow.Action(card.NextRow(), Loc.T(L.Greenthumb.TendAll), theme.Accent, theme))
@@ -252,6 +264,43 @@ internal sealed partial class GreenthumbApp
 
         AppHeader.EndLargeTitle(in navBar, context, "greenthumb.patch.nav", PatchLabel.For(patch),
             NavBarStyle.From(ui), ReadOnlySpan<NavBarButton>.Empty, Loc.T(L.Greenthumb.GardenTab), back);
+    }
+
+    private void DrawPatchName(GardenPatch patch)
+    {
+        if (patchNameId != patch.Id)
+        {
+            patchNameId = patch.Id;
+            patchNameDraft = patch.Name;
+        }
+
+        SettingsSection.Header(Loc.T(L.Greenthumb.PatchName), theme);
+        var scale = UiScale.Current;
+        var origin = ImGui.GetCursorScreenPos();
+        var width = ScrollLayout.StableContentWidth();
+        var field = new Rect(origin, origin + new Vector2(width, GlassField.HeightUnits * scale));
+        SearchBar.Surface(ImGui.GetWindowDrawList(), field, ControlInk.From(theme));
+        if (GlassField.Text(field, "##greenthumbPatchName", Loc.T(PatchLabel.KindName(patch.Kind)),
+                ref patchNameDraft, theme, scale, MaxPatchNameLength, false, ImGuiInputTextFlags.None))
+        {
+            patch.Name = patchNameDraft.Trim();
+            patchNameDirty = true;
+            gardenVersion++;
+        }
+
+        ImGui.SetCursorScreenPos(origin);
+        ImGui.Dummy(new Vector2(width, field.Height));
+    }
+
+    private void SavePatchNameWhenIdle()
+    {
+        if (!patchNameDirty || ImGui.IsAnyItemActive())
+        {
+            return;
+        }
+
+        patchNameDirty = false;
+        SaveGarden();
     }
 
     private static bool HasPlanted(GardenPatch patch)
@@ -509,7 +558,13 @@ internal sealed partial class GreenthumbApp
         }
 
         Gap(Metrics.Space.Lg);
-        var clearCard = GroupCard.Begin(theme, 1);
+        var ready = GardenTimers.IsReady(bed, DateTime.UtcNow);
+        var clearCard = GroupCard.Begin(theme, ready ? 2 : 1);
+        if (ready && SettingsRow.Action(clearCard.NextRow(), Loc.T(L.Greenthumb.Harvest), theme.Accent, theme))
+        {
+            Harvest(bed);
+        }
+
         if (SettingsRow.Action(clearCard.NextRow(), Loc.T(L.Greenthumb.ClearBed), theme.Danger, theme))
         {
             AskClearBed(bed);
@@ -538,6 +593,57 @@ internal sealed partial class GreenthumbApp
         bed.ReadyNotified = false;
         SaveGarden();
         gardenVersion++;
+    }
+
+    private void Harvest(GardenBed bed)
+    {
+        var count = 0;
+        for (var index = 0; index < crossResultCount; index++)
+        {
+            if (!owned[crossResults[index]])
+            {
+                count++;
+            }
+        }
+
+        harvestSeeds = new int[count];
+        harvestItems = new ActionSheet.Item[count];
+        count = 0;
+        for (var index = 0; index < crossResultCount; index++)
+        {
+            var seed = crossResults[index];
+            if (owned[seed])
+            {
+                continue;
+            }
+
+            harvestSeeds[count] = seed;
+            harvestItems[count] = new ActionSheet.Item(catalog.Name(seed));
+            count++;
+        }
+
+        bed.Clear();
+        SaveGarden();
+        gardenVersion++;
+        if (count > 0)
+        {
+            harvestSheet.Open();
+        }
+    }
+
+    private void DrawHarvestSheet(Rect screen)
+    {
+        if (!harvestSheet.CapturesPointer)
+        {
+            return;
+        }
+
+        var picked = harvestSheet.Draw(screen, ActionSheetStyle.From(theme), harvestItems,
+            Loc.T(L.Greenthumb.NoNewSeeds), false, Loc.T(L.Greenthumb.HarvestPrompt));
+        if (picked >= 0 && picked < harvestSeeds.Length)
+        {
+            SetOwned(harvestSeeds[picked], true);
+        }
     }
 
     private void AskClearBed(GardenBed bed)
@@ -574,14 +680,14 @@ internal sealed partial class GreenthumbApp
         {
             null => GardenTimers.IsReady(bed, nowUtc) ? Loc.T(L.Greenthumb.Ready) : string.Empty,
             { } moment when nowUtc >= moment => Loc.T(L.Greenthumb.Wilting),
-            { } moment => TimeText.Until(moment - nowUtc),
+            { } moment => GardenUntil(moment - nowUtc),
         };
         var ready = GardenTimers.ReadyAtUtc(bed);
         bedReady = ready switch
         {
             null => Loc.T(L.Greenthumb.NotSet),
             { } moment when nowUtc >= moment => Loc.T(L.Greenthumb.Ready),
-            { } moment => TimeText.Until(moment - nowUtc),
+            { } moment => GardenUntil(moment - nowUtc),
         };
         growDaysText = Loc.Plural(L.Greenthumb.Days, bed.GrowHours / HoursPerDay);
         growHoursText = Loc.Plural(L.Greenthumb.Hours, bed.GrowHours % HoursPerDay);
@@ -591,9 +697,21 @@ internal sealed partial class GreenthumbApp
         bedBuiltVersion = gardenVersion;
     }
 
+    private static string GardenUntil(TimeSpan span)
+    {
+        if (span.TotalDays < 1)
+        {
+            return TimeText.Until(span);
+        }
+
+        var days = (int)span.TotalDays;
+        return span.Hours > 0 ? Loc.T(L.Timers.InDaysHours, days, span.Hours) : Loc.T(L.Timers.InDays, days);
+    }
+
     private void RebuildCrossText(GardenPatch patch, int bedIndex, GardenBed bed)
     {
         crossCount = 0;
+        crossResultCount = 0;
         if (!bed.IsPlanted || !catalog.TryIndex(bed.Seed, out var seed))
         {
             return;
@@ -624,6 +742,7 @@ internal sealed partial class GreenthumbApp
             for (var resultIndex = 0; resultIndex < results.Length; resultIndex++)
             {
                 names[resultIndex] = catalog.Name(results[resultIndex]);
+                AddCrossResult(results[resultIndex]);
             }
 
             crossLabels[crossCount] = string.Concat(Loc.T(L.Greenthumb.CrossWith, neighborBuffer[index] + 1), ": ",
@@ -631,5 +750,24 @@ internal sealed partial class GreenthumbApp
             crossValues[crossCount] = string.Join(", ", names);
             crossCount++;
         }
+    }
+
+    private void AddCrossResult(int seed)
+    {
+        if (crossResultCount >= crossResults.Length)
+        {
+            return;
+        }
+
+        for (var index = 0; index < crossResultCount; index++)
+        {
+            if (crossResults[index] == seed)
+            {
+                return;
+            }
+        }
+
+        crossResults[crossResultCount] = seed;
+        crossResultCount++;
     }
 }
