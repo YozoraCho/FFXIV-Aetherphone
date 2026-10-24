@@ -1,6 +1,7 @@
 using Aetherphone.Core;
 using Aetherphone.Core.Gardening;
 using Aetherphone.Core.Localization;
+using Aetherphone.Core.Theme;
 using Aetherphone.Windows.Components;
 using Dalamud.Bindings.ImGui;
 
@@ -16,6 +17,13 @@ internal sealed partial class GreenthumbApp
     private const int MinDepth = 1;
     private const int MaxDepth = 8;
     private const float StepRowUnits = 60f;
+    private const float NodeRadiusUnits = 13f;
+    private const float NodeColumnUnits = 38f;
+    private const float StepPadUnits = 12f;
+    private const float StepIconUnits = 34f;
+    private const float StepGapUnits = 10f;
+    private const float StepLineAlpha = 0.35f;
+    private const float StepLineUnits = 2f;
     private const float SegmentHeightUnits = 34f;
 
     private readonly string[] modeLabels = new string[3];
@@ -37,6 +45,13 @@ internal sealed partial class GreenthumbApp
     private string depthText = string.Empty;
     private string[] stepTitles = Array.Empty<string>();
     private string[] stepSubtitles = Array.Empty<string>();
+    private string[] stepKinds = Array.Empty<string>();
+    private bool[] stepGathers = Array.Empty<bool>();
+    private uint[] stepIcons = Array.Empty<uint>();
+    private string[] stepNumbers = Array.Empty<string>();
+    private string[][] stepTitleLines = Array.Empty<string[]>();
+    private string[][] stepSubtitleLines = Array.Empty<string[]>();
+    private float stepWrapWidth;
     private int[] reachable = Array.Empty<int>();
     private string[] reachableHeaders = Array.Empty<string>();
     private int[] reachableStarts = Array.Empty<int>();
@@ -55,7 +70,7 @@ internal sealed partial class GreenthumbApp
         var origin = ImGui.GetCursorScreenPos();
         var width = ScrollLayout.StableContentWidth();
         var strip = new Rect(origin, origin + new Vector2(width, SegmentHeightUnits * scale));
-        var mode = SegmentStrip.Draw("greenthumb.planner.mode", strip, modeLabels, plannerMode, theme);
+        var mode = SegmentStrip.Draw("greenthumb.planner.mode", strip, modeLabels, plannerMode, ui.Palette);
         ImGui.Dummy(strip.Size);
         if (mode != plannerMode)
         {
@@ -160,13 +175,95 @@ internal sealed partial class GreenthumbApp
             Gap(Metrics.Space.Sm);
         }
 
-        var card = GroupCard.Begin(theme, stepTitles.Length, StepRowUnits);
+        DrawSteps();
+    }
+
+    private void DrawSteps()
+    {
+        var scale = UiScale.Current;
+        var drawList = ImGui.GetWindowDrawList();
+        var origin = ImGui.GetCursorScreenPos();
+        var width = ScrollLayout.StableContentWidth();
+        var pad = StepPadUnits * scale;
+        var iconSize = StepIconUnits * scale;
+        var cardLeft = origin.X + NodeColumnUnits * scale;
+        var textLeft = cardLeft + pad + iconSize + pad;
+        var textWidth = origin.X + width - pad - textLeft;
+        WrapSteps(textWidth);
+        var kindHeight = Typography.LineHeight(TextStyles.Caption1);
+        var titleHeight = Typography.LineHeight(TextStyles.SubheadlineEmphasized);
+        var lineHeight = Typography.LineHeight(TextStyles.Footnote);
+        var gap = StepGapUnits * scale;
+        var nodeRadius = NodeRadiusUnits * scale;
+        var nodeX = origin.X + nodeRadius;
+        var y = origin.Y;
+        var previousNode = 0f;
         for (var index = 0; index < stepTitles.Length; index++)
         {
-            DrawTwoLineRow(card.NextRow(), stepTitles[index], stepSubtitles[index], theme.TextStrong);
+            var textHeight = kindHeight + stepTitleLines[index].Length * titleHeight +
+                             stepSubtitleLines[index].Length * lineHeight;
+            var height = MathF.Max(textHeight, iconSize) + pad * 2f;
+            var min = new Vector2(cardLeft, y);
+            var max = new Vector2(origin.X + width, y + height);
+            var nodeY = y + pad + MathF.Min(iconSize, textHeight) * 0.5f;
+            var ink = stepGathers[index] ? TendInk : ui.Palette.Accent;
+            if (index > 0)
+            {
+                drawList.AddLine(new Vector2(nodeX, previousNode), new Vector2(nodeX, nodeY),
+                    ImGui.GetColorU32(Palette.WithAlpha(ui.Palette.Accent, StepLineAlpha)), StepLineUnits * scale);
+            }
+
+            GroupCard.DrawSurface(drawList, min, max, theme, scale);
+            var iconCenter = min + new Vector2(pad + iconSize * 0.5f, pad + iconSize * 0.5f);
+            DrawSeedIcon(drawList, stepIcons[index], iconCenter, iconSize);
+            var textTop = min.Y + pad + MathF.Max(0f, (iconSize - textHeight) * 0.5f);
+            Typography.Draw(drawList, new Vector2(textLeft, textTop), stepKinds[index], ink, TextStyles.Caption1);
+            textTop += kindHeight;
+            var titles = stepTitleLines[index];
+            for (var line = 0; line < titles.Length; line++)
+            {
+                Typography.Draw(drawList, new Vector2(textLeft, textTop), titles[line], theme.TextStrong,
+                    TextStyles.SubheadlineEmphasized);
+                textTop += titleHeight;
+            }
+
+            var subtitles = stepSubtitleLines[index];
+            for (var line = 0; line < subtitles.Length; line++)
+            {
+                Typography.Draw(drawList, new Vector2(textLeft, textTop), subtitles[line], theme.TextMuted,
+                    TextStyles.Footnote);
+                textTop += lineHeight;
+            }
+
+            ProgressRing.Disc(new Vector2(nodeX, nodeY), nodeRadius, ink);
+            Typography.DrawCentered(drawList, new Vector2(nodeX, nodeY), stepNumbers[index], theme.AppBackground,
+                TextStyles.FootnoteEmphasized);
+            previousNode = nodeY;
+            y = max.Y + gap;
         }
 
-        card.End();
+        ImGui.SetCursorScreenPos(origin);
+        ImGui.Dummy(new Vector2(width, MathF.Max(0f, y - gap - origin.Y)));
+    }
+
+    private void WrapSteps(float textWidth)
+    {
+        if (MathF.Abs(stepWrapWidth - textWidth) <= 0.5f && stepTitleLines.Length == stepTitles.Length)
+        {
+            return;
+        }
+
+        stepWrapWidth = textWidth;
+        stepTitleLines = new string[stepTitles.Length][];
+        stepSubtitleLines = new string[stepTitles.Length][];
+        for (var index = 0; index < stepTitles.Length; index++)
+        {
+            stepTitleLines[index] = Typography.WrapText(stepTitles[index], TextStyles.SubheadlineEmphasized,
+                textWidth);
+            stepSubtitleLines[index] = stepSubtitles[index].Length > 0
+                ? Typography.WrapText(stepSubtitles[index], TextStyles.Footnote, textWidth)
+                : Array.Empty<string>();
+        }
     }
 
     private void DrawReachable()
@@ -335,20 +432,28 @@ internal sealed partial class GreenthumbApp
         var steps = plan.Routes[routeIndex];
         stepTitles = new string[steps.Length];
         stepSubtitles = new string[steps.Length];
+        stepKinds = new string[steps.Length];
+        stepGathers = new bool[steps.Length];
+        stepIcons = new uint[steps.Length];
+        stepNumbers = new string[steps.Length];
+        stepWrapWidth = 0f;
         for (var index = 0; index < steps.Length; index++)
         {
             var step = steps[index];
-            var number = string.Concat((index + 1).ToString(Loc.Culture), ". ");
+            stepNumbers[index] = (index + 1).ToString(Loc.Culture);
+            stepIcons[index] = catalog.Icon(step.Seed);
             if (step.Kind == PlanStepKind.Gather)
             {
                 var sources = catalog.Book.Seeds[step.Seed].Sources;
-                stepTitles[index] = string.Concat(number, Loc.T(L.Greenthumb.GatherStep, catalog.Name(step.Seed)));
+                stepKinds[index] = Loc.T(L.Greenthumb.KindGather);
+                stepGathers[index] = true;
+                stepTitles[index] = catalog.Name(step.Seed);
                 stepSubtitles[index] = sources.Length > 0 ? sources[0] : string.Empty;
                 continue;
             }
 
-            stepTitles[index] = string.Concat(number,
-                Loc.T(L.Greenthumb.CrossStep, catalog.Name(step.First), catalog.Name(step.Second)));
+            stepKinds[index] = Loc.T(L.Greenthumb.KindCross);
+            stepTitles[index] = Loc.T(L.Greenthumb.CrossStep, catalog.Name(step.First), catalog.Name(step.Second));
             stepSubtitles[index] = Loc.T(L.Greenthumb.Gives, catalog.Name(step.Seed));
         }
     }

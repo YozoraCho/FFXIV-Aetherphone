@@ -18,10 +18,16 @@ internal sealed class GardenCatalog
     private const string DataFolder = "Gardening";
     private const string DataFile = "Seeds.json";
 
+    private static readonly string[] SeedSuffixes =
+    {
+        " Seeds", " Kernels", " Bulbs", " Pips", " Sapling", " Pits", " Sori", " Set", " Cloves",
+    };
+
     private readonly IDataManager data;
     private readonly string dataPath;
     private SeedBook? book;
     private string[] names = Array.Empty<string>();
+    private uint[] icons = Array.Empty<uint>();
     private string[] searchKeys = Array.Empty<string>();
     private int[] byName = Array.Empty<int>();
     private volatile GardenCatalogState state;
@@ -41,6 +47,10 @@ internal sealed class GardenCatalog
     public ReadOnlySpan<int> SortedByName => byName;
 
     public string Name(int index) => names[index];
+
+    public uint Icon(int index) => icons[index];
+
+    public uint IconOf(string key) => TryIndex(key, out var index) ? icons[index] : 0;
 
     public string SearchKey(int index) => searchKeys[index];
 
@@ -87,7 +97,8 @@ internal sealed class GardenCatalog
         try
         {
             var loaded = SeedBook.Parse(File.ReadAllText(dataPath));
-            var localized = LocalizedNames(loaded);
+            var itemIcons = new uint[loaded.Count];
+            var localized = LocalizedNames(loaded, itemIcons);
             var keys = new string[localized.Length];
             for (var index = 0; index < localized.Length; index++)
             {
@@ -104,6 +115,7 @@ internal sealed class GardenCatalog
                 StringComparison.CurrentCultureIgnoreCase));
             book = loaded;
             names = localized;
+            icons = itemIcons;
             searchKeys = keys;
             byName = order;
             state = GardenCatalogState.Ready;
@@ -115,7 +127,7 @@ internal sealed class GardenCatalog
         }
     }
 
-    private string[] LocalizedNames(SeedBook loaded)
+    private string[] LocalizedNames(SeedBook loaded, uint[] itemIcons)
     {
         var result = new string[loaded.Count];
         for (var index = 0; index < result.Length; index++)
@@ -131,17 +143,35 @@ internal sealed class GardenCatalog
                 wanted[result[index]] = index;
             }
 
+            var crops = new Dictionary<string, int>(loaded.Count, StringComparer.OrdinalIgnoreCase);
+            for (var index = 0; index < result.Length; index++)
+            {
+                var crop = CropName(result[index]);
+                if (crop.Length > 0)
+                {
+                    crops.TryAdd(crop, index);
+                }
+            }
+
+            var cropIcons = new uint[result.Length];
             var matched = new bool[result.Length];
             var english = data.GetExcelSheet<Item>(ClientLanguage.English);
             var local = data.GetExcelSheet<Item>();
             foreach (var item in english)
             {
-                if (!wanted.TryGetValue(item.Name.ExtractText(), out var index))
+                var englishName = item.Name.ExtractText();
+                if (crops.TryGetValue(englishName, out var cropIndex))
+                {
+                    cropIcons[cropIndex] = item.Icon;
+                }
+
+                if (!wanted.TryGetValue(englishName, out var index))
                 {
                     continue;
                 }
 
                 matched[index] = true;
+                itemIcons[index] = item.Icon;
                 if (local.TryGetRow(item.RowId, out var localItem))
                 {
                     var name = localItem.Name.ExtractText();
@@ -154,6 +184,11 @@ internal sealed class GardenCatalog
 
             for (var index = 0; index < matched.Length; index++)
             {
+                if (cropIcons[index] != 0)
+                {
+                    itemIcons[index] = cropIcons[index];
+                }
+
                 if (!matched[index])
                 {
                     AepLog.Warning(string.Concat("[Greenthumb] no game item named ", result[index]));
@@ -166,5 +201,19 @@ internal sealed class GardenCatalog
         }
 
         return result;
+    }
+
+    private static string CropName(string seed)
+    {
+        for (var index = 0; index < SeedSuffixes.Length; index++)
+        {
+            var suffix = SeedSuffixes[index];
+            if (seed.EndsWith(suffix, StringComparison.Ordinal))
+            {
+                return seed[..^suffix.Length];
+            }
+        }
+
+        return string.Empty;
     }
 }
