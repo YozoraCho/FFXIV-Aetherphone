@@ -8589,6 +8589,16 @@ internal static class L
         public static readonly LocString WiltsIn = new("greenthumb.wiltsIn", "Wilts {0}");
         public static readonly LocString KindCross = new("greenthumb.kindCross", "Crossbreed");
         public static readonly LocString KindGather = new("greenthumb.kindGather", "Gather");
+        public static readonly LocString Settings = new("greenthumb.settings", "Settings");
+        public static readonly LocString AutoSection = new("greenthumb.autoSection", "Automatic tracking");
+        public static readonly LocString AutoHint = new("greenthumb.autoHint", "Greenthumb only reads what the game already shows you. It never does anything in the game for you.");
+        public static readonly LocString FindSeeds = new("greenthumb.findSeeds", "Find seeds I own");
+        public static readonly LocString FindSeedsHint = new("greenthumb.findSeedsHint", "Ticks seeds in your inventory, saddlebag and retainers as you open them. It never unticks a seed.");
+        public static readonly LocString CheckNow = new("greenthumb.checkNow", "Check now");
+        public static readonly LocString NoNewSeedsFound = new("greenthumb.noNewSeedsFound", "No new seeds found");
+        public static readonly LocString NeedCharacter = new("greenthumb.needCharacter", "Log in with a character to check.");
+        public static readonly LocString AndMore = new("greenthumb.andMore", "{0} and {1} more");
+        public static readonly LocPlural FoundSeeds = new("greenthumb.foundSeeds", "Found {0} new seed", "Found {0} new seeds");
         public static readonly LocPlural Beds = new("greenthumb.beds", "{0} bed", "{0} beds");
         public static readonly LocPlural NeedTending = new("greenthumb.needTending", "{0} needs tending", "{0} need tending");
         public static readonly LocPlural ReadyToHarvest = new("greenthumb.readyToHarvest", "{0} ready to harvest", "{0} ready to harvest");

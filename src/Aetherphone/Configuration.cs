@@ -600,6 +600,7 @@ internal sealed class Configuration : IPluginConfiguration, IHomeConfiguration, 
     public List<GardenPatch> GreenthumbPatches { get; set; } = new();
     public List<string> GreenthumbOwnedSeeds { get; set; } = new();
     public bool GreenthumbIncludeGatherable { get; set; } = true;
+    public bool GreenthumbFindOwnedSeeds { get; set; }
     public DateTime? TimerEndsAtUtc { get; set; }
     public int TimerDurationSeconds { get; set; }
     public bool TimerNotified { get; set; }

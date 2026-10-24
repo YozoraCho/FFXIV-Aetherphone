@@ -28,6 +28,7 @@ internal sealed class GardenCatalog
     private SeedBook? book;
     private string[] names = Array.Empty<string>();
     private uint[] icons = Array.Empty<uint>();
+    private Dictionary<uint, int> seedByItem = new();
     private string[] searchKeys = Array.Empty<string>();
     private int[] byName = Array.Empty<int>();
     private volatile GardenCatalogState state;
@@ -51,6 +52,17 @@ internal sealed class GardenCatalog
     public uint Icon(int index) => icons[index];
 
     public uint IconOf(string key) => TryIndex(key, out var index) ? icons[index] : 0;
+
+    public bool TryIndexItem(uint itemId, out int index)
+    {
+        if (state == GardenCatalogState.Ready)
+        {
+            return seedByItem.TryGetValue(itemId, out index);
+        }
+
+        index = -1;
+        return false;
+    }
 
     public string SearchKey(int index) => searchKeys[index];
 
@@ -98,7 +110,8 @@ internal sealed class GardenCatalog
         {
             var loaded = SeedBook.Parse(File.ReadAllText(dataPath));
             var itemIcons = new uint[loaded.Count];
-            var localized = LocalizedNames(loaded, itemIcons);
+            var items = new Dictionary<uint, int>(loaded.Count);
+            var localized = LocalizedNames(loaded, itemIcons, items);
             var keys = new string[localized.Length];
             for (var index = 0; index < localized.Length; index++)
             {
@@ -116,6 +129,7 @@ internal sealed class GardenCatalog
             book = loaded;
             names = localized;
             icons = itemIcons;
+            seedByItem = items;
             searchKeys = keys;
             byName = order;
             state = GardenCatalogState.Ready;
@@ -127,7 +141,7 @@ internal sealed class GardenCatalog
         }
     }
 
-    private string[] LocalizedNames(SeedBook loaded, uint[] itemIcons)
+    private string[] LocalizedNames(SeedBook loaded, uint[] itemIcons, Dictionary<uint, int> items)
     {
         var result = new string[loaded.Count];
         for (var index = 0; index < result.Length; index++)
@@ -172,6 +186,7 @@ internal sealed class GardenCatalog
 
                 matched[index] = true;
                 itemIcons[index] = item.Icon;
+                items[item.RowId] = index;
                 if (local.TryGetRow(item.RowId, out var localItem))
                 {
                     var name = localItem.Name.ExtractText();

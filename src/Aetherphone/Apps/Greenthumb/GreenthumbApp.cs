@@ -30,6 +30,7 @@ internal sealed partial class GreenthumbApp : IResumableApp
     private readonly Configuration configuration;
     private readonly GardenCatalog catalog;
     private readonly GardenAlerts alerts;
+    private readonly SeedDiscovery discovery;
     private readonly ConfirmService confirm;
     private readonly AppSkin ui = new(AppPalettes.Greenthumb(PhoneTheme.Default));
     private readonly ViewRouter<GreenthumbRoute> router;
@@ -44,14 +45,16 @@ internal sealed partial class GreenthumbApp : IResumableApp
     private GreenthumbTab activeTab;
     private bool[] owned = Array.Empty<bool>();
     private int ownedCount;
+    private int ownedVersion;
     private long nextRefresh;
 
     public GreenthumbApp(Configuration configuration, GardenCatalog catalog, GardenAlerts alerts,
-        ConfirmService confirm)
+        SeedDiscovery discovery, ConfirmService confirm)
     {
         this.configuration = configuration;
         this.catalog = catalog;
         this.alerts = alerts;
+        this.discovery = discovery;
         this.confirm = confirm;
         router = new ViewRouter<GreenthumbRoute>(GreenthumbRoute.Root);
         drawView = DrawView;
@@ -125,6 +128,9 @@ internal sealed partial class GreenthumbApp : IResumableApp
             case GreenthumbScreen.PickSeed:
                 DrawSeedPicker(context, route);
                 return;
+            case GreenthumbScreen.Settings:
+                DrawSettings(context);
+                return;
             default:
                 DrawRoot(context);
                 return;
@@ -159,12 +165,18 @@ internal sealed partial class GreenthumbApp : IResumableApp
                 ImGui.Dummy(new Vector2(0f, BottomBreathing * scale));
             }
 
-            gardenButtons[0] = new NavBarButton(PhoneIcons.Plus, Loc.T(L.Greenthumb.AddPatch));
+            gardenButtons[0] = new NavBarButton(IconGlyph.Of(FontAwesomeIcon.Cog), Loc.T(L.Greenthumb.Settings));
+            gardenButtons[1] = new NavBarButton(PhoneIcons.Plus, Loc.T(L.Greenthumb.AddPatch));
             var buttons = activeTab == GreenthumbTab.Garden
                 ? (ReadOnlySpan<NavBarButton>)gardenButtons
                 : ReadOnlySpan<NavBarButton>.Empty;
-            if (AppHeader.EndLargeTitle(in navBar, context, "greenthumb.nav", title, NavBarStyle.From(ui),
-                    buttons) == 0 && activeTab == GreenthumbTab.Garden)
+            var pressed = AppHeader.EndLargeTitle(in navBar, context, "greenthumb.nav", title, NavBarStyle.From(ui),
+                buttons);
+            if (activeTab == GreenthumbTab.Garden && pressed == 0)
+            {
+                router.Push(GreenthumbRoute.SettingsPage);
+            }
+            else if (activeTab == GreenthumbTab.Garden && pressed == 1)
             {
                 OpenKindSheet();
             }
@@ -221,11 +233,14 @@ internal sealed partial class GreenthumbApp : IResumableApp
 
     private void SyncOwned()
     {
-        if (catalog.State != GardenCatalogState.Ready || owned.Length == catalog.Count)
+        if (catalog.State != GardenCatalogState.Ready ||
+            (owned.Length == catalog.Count && ownedVersion == discovery.Version))
         {
             return;
         }
 
+        ownedVersion = discovery.Version;
+        ownedLabelCount = -1;
         owned = new bool[catalog.Count];
         ownedCount = 0;
         var keys = configuration.GreenthumbOwnedSeeds;
