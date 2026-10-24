@@ -14,6 +14,8 @@ internal sealed partial class GreenthumbApp
     private const int FilterCrossOnly = 1;
     private const int FilterGatherable = 2;
     private const float SearchGapUnits = 10f;
+    private const float SeedRowUnits = 58f;
+    private const float SeedIconUnits = 32f;
 
     private readonly ChipRail filterRail = new();
     private readonly string[] filterLabels = new string[3];
@@ -53,7 +55,11 @@ internal sealed partial class GreenthumbApp
         }
 
         SettingsSection.Header(ownedLabel, theme);
-        var card = GroupCard.Begin(theme, seedRows.Length);
+        var scale = UiScale.Current;
+        var drawList = ImGui.GetWindowDrawList();
+        var gatherLabel = Loc.T(L.Greenthumb.FilterGatherable);
+        var crossLabel = Loc.T(L.Greenthumb.CrossOnly);
+        var card = GroupCard.Begin(theme, seedRows.Length, SeedRowUnits);
         for (var index = 0; index < seedRows.Length; index++)
         {
             var row = card.NextRow();
@@ -63,7 +69,8 @@ internal sealed partial class GreenthumbApp
             }
 
             var seed = seedRows[index];
-            var value = SettingsRow.Bool(row, catalog.Name(seed), owned[seed], theme, seedRowIds[seed]);
+            var value = DrawSeedRow(drawList, row, seed,
+                catalog.Book.Seeds[seed].CanGather ? gatherLabel : crossLabel, scale);
             if (value != owned[seed])
             {
                 SetOwned(seed, value);
@@ -71,6 +78,26 @@ internal sealed partial class GreenthumbApp
         }
 
         card.End();
+    }
+
+    private bool DrawSeedRow(ImDrawListPtr drawList, Rect row, int seed, string subtitle, float scale)
+    {
+        var iconSize = SeedIconUnits * scale;
+        DrawSeedIcon(drawList, catalog.Icon(seed), new Vector2(row.Min.X + iconSize * 0.5f, row.Center.Y), iconSize);
+        var toggleWidth = Metrics.Size.ToggleWidth * scale;
+        var toggleHeight = Metrics.Size.ToggleHeight * scale;
+        var toggle = new Rect(new Vector2(row.Max.X - toggleWidth, row.Center.Y - toggleHeight * 0.5f),
+            new Vector2(row.Max.X, row.Center.Y + toggleHeight * 0.5f));
+        var textLeft = row.Min.X + iconSize + Metrics.Space.Md * scale;
+        var textWidth = toggle.Min.X - Metrics.Space.Md * scale - textLeft;
+        var titleHeight = Typography.LineHeight(TextStyles.Body);
+        var subtitleHeight = Typography.LineHeight(TextStyles.Footnote);
+        var top = row.Center.Y - (titleHeight + subtitleHeight) * 0.5f;
+        Typography.Draw(drawList, new Vector2(textLeft, top),
+            Typography.FitText(catalog.Name(seed), textWidth, TextStyles.Body), theme.TextStrong, TextStyles.Body);
+        Typography.Draw(drawList, new Vector2(textLeft, top + titleHeight),
+            Typography.FitText(subtitle, textWidth, TextStyles.Footnote), theme.TextMuted, TextStyles.Footnote);
+        return Toggle.Draw(seedRowIds[seed], toggle, owned[seed], theme);
     }
 
     private void DrawSeedPicker(in PhoneContext context, GreenthumbRoute route)

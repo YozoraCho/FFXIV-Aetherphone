@@ -159,8 +159,15 @@ internal sealed partial class GreenthumbApp : IResumableApp
                 ImGui.Dummy(new Vector2(0f, BottomBreathing * scale));
             }
 
-            AppHeader.EndLargeTitle(in navBar, context, "greenthumb.nav", title, NavBarStyle.From(ui),
-                ReadOnlySpan<NavBarButton>.Empty);
+            gardenButtons[0] = new NavBarButton(PhoneIcons.Plus, Loc.T(L.Greenthumb.AddPatch));
+            var buttons = activeTab == GreenthumbTab.Garden
+                ? (ReadOnlySpan<NavBarButton>)gardenButtons
+                : ReadOnlySpan<NavBarButton>.Empty;
+            if (AppHeader.EndLargeTitle(in navBar, context, "greenthumb.nav", title, NavBarStyle.From(ui),
+                    buttons) == 0 && activeTab == GreenthumbTab.Garden)
+            {
+                OpenKindSheet();
+            }
         }
 
         DrawTabBar(context.Content);
