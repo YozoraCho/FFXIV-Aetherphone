@@ -128,6 +128,21 @@ public sealed class GreenthumbPlannerTests
         Assert.Null(GardenTimers.WiltsAtUtc(bed, 24, planted.AddHours(31)));
     }
 
+    [Fact]
+    public void FoundSeedsSkipOwnedAndRepeatedOnes()
+    {
+        var owned = new bool[5];
+        owned[1] = true;
+        var found = new List<int>();
+
+        Assert.True(SeedMatcher.AddIfNew(3, owned, found));
+        Assert.False(SeedMatcher.AddIfNew(3, owned, found));
+        Assert.False(SeedMatcher.AddIfNew(1, owned, found));
+        Assert.False(SeedMatcher.AddIfNew(-1, owned, found));
+        Assert.True(SeedMatcher.AddIfNew(0, owned, found));
+        Assert.Equal(new[] { 3, 0 }, found.ToArray());
+    }
+
     private static int Index(string key)
     {
         Assert.True(Book.Value.TryIndex(key, out var index), key);

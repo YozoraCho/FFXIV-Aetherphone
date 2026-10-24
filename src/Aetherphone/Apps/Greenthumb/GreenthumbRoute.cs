@@ -6,6 +6,7 @@ internal enum GreenthumbScreen : byte
     Patch,
     Bed,
     PickSeed,
+    Settings,
 }
 
 internal enum GreenthumbTab : byte
@@ -32,6 +33,8 @@ internal readonly record struct GreenthumbRoute(GreenthumbScreen Screen, Guid Pa
 
     public static GreenthumbRoute PickForBed(Guid patchId, int bed) =>
         new(GreenthumbScreen.PickSeed, patchId, bed, SeedPickPurpose.Bed);
+
+    public static readonly GreenthumbRoute SettingsPage = new(GreenthumbScreen.Settings);
 
     public static GreenthumbRoute PickTarget() => new(GreenthumbScreen.PickSeed, Purpose: SeedPickPurpose.Target);
 }

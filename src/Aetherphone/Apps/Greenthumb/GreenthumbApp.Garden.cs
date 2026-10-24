@@ -37,7 +37,7 @@ internal sealed partial class GreenthumbApp
 
     private readonly ActionSheet kindSheet = new();
     private readonly ActionSheet.Item[] kindItems = new ActionSheet.Item[4];
-    private readonly NavBarButton[] gardenButtons = new NavBarButton[1];
+    private readonly NavBarButton[] gardenButtons = new NavBarButton[2];
     private readonly string[] statValues = new string[StatCount];
     private readonly string[] statLabels = new string[StatCount];
     private readonly StatusTone[] statTones = new StatusTone[StatCount];
