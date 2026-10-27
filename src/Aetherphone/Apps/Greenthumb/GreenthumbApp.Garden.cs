@@ -71,7 +71,9 @@ internal sealed partial class GreenthumbApp
         var drawList = ImGui.GetWindowDrawList();
         var origin = ImGui.GetCursorScreenPos();
         var width = ScrollLayout.StableContentWidth();
-        var y = DrawStats(drawList, origin, width, scale) + Metrics.Space.Lg * scale;
+        var y = origin.Y;
+        DrawPlaceBanner(drawList, origin, width, scale, ref y);
+        y = DrawStats(drawList, new Vector2(origin.X, y), width, scale) + Metrics.Space.Lg * scale;
         var cardHeight = PatchCardHeightUnits * scale;
         var gap = PatchCardGapUnits * scale;
         for (var index = 0; index < patches.Count; index++)

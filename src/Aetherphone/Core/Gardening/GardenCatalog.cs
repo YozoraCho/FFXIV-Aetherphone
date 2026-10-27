@@ -12,11 +12,12 @@ internal enum GardenCatalogState : byte
     Failed,
 }
 
-internal sealed class GardenCatalog
+internal sealed class GardenCatalog : IGardenItems
 {
     public const string AppId = "greenthumb";
     private const string DataFolder = "Gardening";
     private const string DataFile = "Seeds.json";
+    private const string FishmealName = "Fishmeal";
 
     private static readonly string[] SeedSuffixes =
     {
@@ -29,6 +30,8 @@ internal sealed class GardenCatalog
     private string[] names = Array.Empty<string>();
     private uint[] icons = Array.Empty<uint>();
     private Dictionary<uint, int> seedByItem = new();
+    private Dictionary<uint, int> seedByCrop = new();
+    private uint fishmealItem;
     private string[] searchKeys = Array.Empty<string>();
     private int[] byName = Array.Empty<int>();
     private volatile GardenCatalogState state;
@@ -52,6 +55,19 @@ internal sealed class GardenCatalog
     public uint Icon(int index) => icons[index];
 
     public uint IconOf(string key) => TryIndex(key, out var index) ? icons[index] : 0;
+
+    public uint FishmealItem => state == GardenCatalogState.Ready ? fishmealItem : 0;
+
+    public bool TryIndexCrop(uint itemId, out int index)
+    {
+        if (state == GardenCatalogState.Ready)
+        {
+            return seedByCrop.TryGetValue(itemId, out index);
+        }
+
+        index = -1;
+        return false;
+    }
 
     public bool TryIndexItem(uint itemId, out int index)
     {
@@ -111,7 +127,8 @@ internal sealed class GardenCatalog
             var loaded = SeedBook.Parse(File.ReadAllText(dataPath));
             var itemIcons = new uint[loaded.Count];
             var items = new Dictionary<uint, int>(loaded.Count);
-            var localized = LocalizedNames(loaded, itemIcons, items);
+            var cropItems = new Dictionary<uint, int>(loaded.Count);
+            var localized = LocalizedNames(loaded, itemIcons, items, cropItems);
             var keys = new string[localized.Length];
             for (var index = 0; index < localized.Length; index++)
             {
@@ -130,6 +147,7 @@ internal sealed class GardenCatalog
             names = localized;
             icons = itemIcons;
             seedByItem = items;
+            seedByCrop = cropItems;
             searchKeys = keys;
             byName = order;
             state = GardenCatalogState.Ready;
@@ -141,7 +159,8 @@ internal sealed class GardenCatalog
         }
     }
 
-    private string[] LocalizedNames(SeedBook loaded, uint[] itemIcons, Dictionary<uint, int> items)
+    private string[] LocalizedNames(SeedBook loaded, uint[] itemIcons, Dictionary<uint, int> items,
+        Dictionary<uint, int> cropItems)
     {
         var result = new string[loaded.Count];
         for (var index = 0; index < result.Length; index++)
@@ -177,6 +196,12 @@ internal sealed class GardenCatalog
                 if (crops.TryGetValue(englishName, out var cropIndex))
                 {
                     cropIcons[cropIndex] = item.Icon;
+                    cropItems.TryAdd(item.RowId, cropIndex);
+                }
+
+                if (fishmealItem == 0 && string.Equals(englishName, FishmealName, StringComparison.Ordinal))
+                {
+                    fishmealItem = item.RowId;
                 }
 
                 if (!wanted.TryGetValue(englishName, out var index))

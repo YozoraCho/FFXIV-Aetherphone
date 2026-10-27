@@ -31,6 +31,8 @@ internal sealed partial class GreenthumbApp : IResumableApp
     private readonly GardenCatalog catalog;
     private readonly GardenAlerts alerts;
     private readonly SeedDiscovery discovery;
+    private readonly GardenInbox inbox;
+    private readonly GardenTracker tracker;
     private readonly ConfirmService confirm;
     private readonly AppSkin ui = new(AppPalettes.Greenthumb(PhoneTheme.Default));
     private readonly ViewRouter<GreenthumbRoute> router;
@@ -49,12 +51,14 @@ internal sealed partial class GreenthumbApp : IResumableApp
     private long nextRefresh;
 
     public GreenthumbApp(Configuration configuration, GardenCatalog catalog, GardenAlerts alerts,
-        SeedDiscovery discovery, ConfirmService confirm)
+        SeedDiscovery discovery, GardenInbox inbox, GardenTracker tracker, ConfirmService confirm)
     {
         this.configuration = configuration;
         this.catalog = catalog;
         this.alerts = alerts;
         this.discovery = discovery;
+        this.inbox = inbox;
+        this.tracker = tracker;
         this.confirm = confirm;
         router = new ViewRouter<GreenthumbRoute>(GreenthumbRoute.Root);
         drawView = DrawView;
@@ -130,6 +134,12 @@ internal sealed partial class GreenthumbApp : IResumableApp
                 return;
             case GreenthumbScreen.Settings:
                 DrawSettings(context);
+                return;
+            case GreenthumbScreen.Place:
+                DrawPlace(context);
+                return;
+            case GreenthumbScreen.Layout:
+                DrawLayout(context);
                 return;
             default:
                 DrawRoot(context);

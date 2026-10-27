@@ -60,7 +60,12 @@ internal sealed partial class GreenthumbApp
         var navBar = AppHeader.BeginLargeTitle(context);
         using (AppSurface.Begin(navBar.Body))
         {
-            DrawBedGrid(patch);
+            var tapped = DrawBedGrid(patch);
+            if (tapped >= 0)
+            {
+                router.Push(GreenthumbRoute.BedOf(patch.Id, tapped));
+                gardenVersion++;
+            }
             Gap(Metrics.Space.Xl);
             DrawCrossPairs();
             if (HasPlanted(patch))
@@ -201,8 +206,9 @@ internal sealed partial class GreenthumbApp
         _ => Loc.T(L.Greenthumb.Growing),
     };
 
-    private void DrawBedGrid(GardenPatch patch)
+    private int DrawBedGrid(GardenPatch patch)
     {
+        var tapped = -1;
         var scale = UiScale.Current;
         var kind = patch.Kind;
         var columns = GardenLayout.Columns(kind);
@@ -229,12 +235,12 @@ internal sealed partial class GreenthumbApp
 
             if (DrawBedTile(drawList, bed, min, max, scale))
             {
-                router.Push(GreenthumbRoute.BedOf(patch.Id, bed));
-                gardenVersion++;
+                tapped = bed;
             }
         }
 
         ImGui.Dummy(new Vector2(width, cell * rows + gap * (rows - 1)));
+        return tapped;
     }
 
     private bool DrawBedTile(ImDrawListPtr drawList, int bed, Vector2 min, Vector2 max, float scale)

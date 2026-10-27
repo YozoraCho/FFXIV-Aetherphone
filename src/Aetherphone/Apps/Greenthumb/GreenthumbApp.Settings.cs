@@ -16,7 +16,7 @@ internal sealed partial class GreenthumbApp
         using (AppSurface.Begin(navBar.Body))
         {
             SettingsSection.Header(Loc.T(L.Greenthumb.AutoSection), theme);
-            var card = GroupCard.Begin(theme, 2);
+            var card = GroupCard.Begin(theme, 3);
             var find = SettingsRow.Bool(card.NextRow(), Loc.T(L.Greenthumb.FindSeeds),
                 configuration.GreenthumbFindOwnedSeeds, theme, "greenthumb.settings.findSeeds",
                 Loc.T(L.Greenthumb.FindSeedsHint));
@@ -37,6 +37,15 @@ internal sealed partial class GreenthumbApp
                 };
             }
 
+            var track = SettingsRow.Bool(card.NextRow(), Loc.T(L.Greenthumb.TrackGarden),
+                configuration.GreenthumbTrackGarden, theme, "greenthumb.settings.track",
+                Loc.T(L.Greenthumb.TrackGardenHint));
+            if (track != configuration.GreenthumbTrackGarden)
+            {
+                configuration.GreenthumbTrackGarden = track;
+                configuration.Save();
+            }
+
             card.End();
             if (scanResult.Length > 0)
             {
@@ -44,6 +53,19 @@ internal sealed partial class GreenthumbApp
             }
 
             SettingsSection.Hint(Loc.T(L.Greenthumb.AutoHint), theme);
+            Gap(Metrics.Space.Lg);
+            SettingsSection.Header(Loc.T(L.Greenthumb.TesterSection), theme);
+            var testerCard = GroupCard.Begin(theme, 1);
+            var log = SettingsRow.Bool(testerCard.NextRow(), Loc.T(L.Greenthumb.TrackLog),
+                configuration.GreenthumbTrackingLog, theme, "greenthumb.settings.log",
+                Loc.T(L.Greenthumb.TrackLogHint));
+            if (log != configuration.GreenthumbTrackingLog)
+            {
+                configuration.GreenthumbTrackingLog = log;
+                configuration.Save();
+            }
+
+            testerCard.End();
             Gap(BottomBreathing);
         }
 

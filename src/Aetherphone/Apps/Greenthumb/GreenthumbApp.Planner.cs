@@ -35,6 +35,7 @@ internal sealed partial class GreenthumbApp
     private int plannerMode;
     private int target = -1;
     private int routeIndex;
+    private int plannedTarget = -1;
     private int depth = 2;
     private bool plannerDirty = true;
     private PlanResult plan = PlanResult.None;
@@ -59,6 +60,8 @@ internal sealed partial class GreenthumbApp
     private string[] starterHeaders = Array.Empty<string>();
     private string[][] starterNames = Array.Empty<string[]>();
     private string[][] starterSources = Array.Empty<string[]>();
+    private PlanStatus starterStatus;
+    private bool startFromOwned;
 
     private void DrawPlanner(Rect body)
     {
@@ -188,7 +191,7 @@ internal sealed partial class GreenthumbApp
         var iconSize = StepIconUnits * scale;
         var cardLeft = origin.X + NodeColumnUnits * scale;
         var textLeft = cardLeft + pad + iconSize + pad;
-        var textWidth = origin.X + width - pad - textLeft;
+        var textWidth = origin.X + width - pad - textLeft - ChevronUnits * scale - pad;
         WrapSteps(textWidth);
         var kindHeight = Typography.LineHeight(TextStyles.Caption1);
         var titleHeight = Typography.LineHeight(TextStyles.SubheadlineEmphasized);
@@ -213,7 +216,22 @@ internal sealed partial class GreenthumbApp
                     ImGui.GetColorU32(Palette.WithAlpha(ui.Palette.Accent, StepLineAlpha)), StepLineUnits * scale);
             }
 
-            GroupCard.DrawSurface(drawList, min, max, theme, scale);
+            var cross = !stepGathers[index];
+            if (cross)
+            {
+                if (DrawCardButton(drawList, min, max, scale))
+                {
+                    OpenLayout(plan.Routes[routeIndex][index]);
+                }
+
+                DrawChevron(drawList, new Vector2(max.X - pad - ChevronUnits * scale * 0.5f, (min.Y + max.Y) * 0.5f),
+                    scale);
+            }
+            else
+            {
+                GroupCard.DrawSurface(drawList, min, max, theme, scale);
+            }
+
             var iconCenter = min + new Vector2(pad + iconSize * 0.5f, pad + iconSize * 0.5f);
             DrawSeedIcon(drawList, stepIcons[index], iconCenter, iconSize);
             var textTop = min.Y + pad + MathF.Max(0f, (iconSize - textHeight) * 0.5f);
@@ -336,6 +354,18 @@ internal sealed partial class GreenthumbApp
             return;
         }
 
+        if (starterStatus == PlanStatus.AlreadyOwned)
+        {
+            SettingsSection.Hint(Loc.T(L.Greenthumb.AlreadyOwned), theme);
+            return;
+        }
+
+        if (startFromOwned)
+        {
+            SettingsSection.Hint(Loc.T(L.Greenthumb.StartFromOwned), theme);
+            return;
+        }
+
         if (starterHeaders.Length == 0)
         {
             SettingsSection.Hint(Loc.T(L.Greenthumb.NoSourceInfo), theme);
@@ -407,8 +437,12 @@ internal sealed partial class GreenthumbApp
 
     private void BuildPlan(bool gather)
     {
+        var previous = plan.Status == PlanStatus.Found && routeIndex < plan.Routes.Length && plannedTarget == target
+            ? plan.Routes[routeIndex]
+            : null;
         plan = target >= 0 ? CrossbreedPlanner.FindRoutes(catalog.Book, owned, target, gather) : PlanResult.None;
-        routeIndex = 0;
+        plannedTarget = target;
+        routeIndex = previous is null ? 0 : MatchingRoute(previous);
         if (plan.Status != PlanStatus.Found)
         {
             stepTitles = Array.Empty<string>();
@@ -425,6 +459,43 @@ internal sealed partial class GreenthumbApp
         }
 
         BuildSteps();
+    }
+
+    private int MatchingRoute(PlanStep[] previous)
+    {
+        if (plan.Status != PlanStatus.Found)
+        {
+            return 0;
+        }
+
+        var best = 0;
+        var bestShared = 0;
+        var limit = Math.Min(plan.Routes.Length, MaxRouteChips);
+        for (var index = 0; index < limit; index++)
+        {
+            var shared = SharedCrosses(previous, plan.Routes[index]);
+            if (shared > bestShared)
+            {
+                best = index;
+                bestShared = shared;
+            }
+        }
+
+        return best;
+    }
+
+    private static int SharedCrosses(PlanStep[] first, PlanStep[] second)
+    {
+        var shared = 0;
+        for (var index = 0; index < first.Length; index++)
+        {
+            if (first[index].Kind == PlanStepKind.Cross && Array.IndexOf(second, first[index]) >= 0)
+            {
+                shared++;
+            }
+        }
+
+        return shared;
     }
 
     private void BuildSteps()
@@ -512,8 +583,16 @@ internal sealed partial class GreenthumbApp
             return;
         }
 
-        var sets = catalog.Book.Seeds[target].Starters;
-        var count = Math.Min(sets.Length, MaxStarterSets);
+        var routes = CrossbreedPlanner.FindRoutes(catalog.Book, owned, target, true);
+        starterStatus = routes.Status;
+        var sets = CrossbreedPlanner.GatherSets(catalog.Book, routes);
+        startFromOwned = routes.Status == PlanStatus.Found && sets.Count > 0 && sets[0].Length == 0;
+        if (startFromOwned)
+        {
+            sets.Clear();
+        }
+
+        var count = Math.Min(sets.Count, MaxStarterSets);
         starterHeaders = new string[count];
         starterNames = new string[count][];
         starterSources = new string[count][];

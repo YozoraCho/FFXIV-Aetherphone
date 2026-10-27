@@ -138,7 +138,7 @@ internal static class AppRegistry
         apps.Add(new DailiesApp(services.Dailies));
         apps.Add(new FishingApp(services.Fishing, services.FishingAlerts, services.Textures));
         apps.Add(new GreenthumbApp(services.Configuration, services.Garden, services.GardenAlerts,
-            services.SeedDiscovery, services.Confirm));
+            services.SeedDiscovery, services.GardenInbox, services.GardenTracker, services.Confirm));
         apps.Add(new GamesApp(services.GameStats, services.GameData, services.Textures, services.Coins,
             services.CoinSessions, services.GameRooms, services.Configuration, services.Leaderboard,
             services.RemoteImages, services.Lodestone, services.MoogleClicker, services.SettingsLauncher,

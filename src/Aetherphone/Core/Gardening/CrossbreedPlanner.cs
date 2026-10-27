@@ -144,6 +144,7 @@ internal static class CrossbreedPlanner
             }
         }
 
+        SortRoutes(book, shortest);
         var shown = Math.Min(shortest.Count, MaxShownRoutes);
         var routes = new PlanStep[shown][];
         for (var routeIndex = 0; routeIndex < shown; routeIndex++)
@@ -219,6 +220,99 @@ internal static class CrossbreedPlanner
 
         memo[seed] = output;
         return output;
+    }
+
+    public static List<int[]> GatherSets(SeedBook book, PlanResult result)
+    {
+        var sets = new List<int[]>();
+        if (result.Status != PlanStatus.Found)
+        {
+            return sets;
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var routeIndex = 0; routeIndex < result.Routes.Length; routeIndex++)
+        {
+            var route = result.Routes[routeIndex];
+            var gathers = new List<int>();
+            for (var stepIndex = 0; stepIndex < route.Length; stepIndex++)
+            {
+                if (route[stepIndex].Kind == PlanStepKind.Gather)
+                {
+                    gathers.Add(route[stepIndex].Seed);
+                }
+            }
+
+            gathers.Sort((first, second) => string.CompareOrdinal(book.Seeds[first].Key, book.Seeds[second].Key));
+            var set = gathers.ToArray();
+            if (seen.Add(string.Join(',', set)))
+            {
+                sets.Add(set);
+            }
+        }
+
+        sets.Sort((first, second) =>
+        {
+            var bySize = first.Length.CompareTo(second.Length);
+            return bySize != 0 ? bySize : string.CompareOrdinal(SetName(book, first), SetName(book, second));
+        });
+        return sets;
+    }
+
+    private static string SetName(SeedBook book, int[] set)
+    {
+        var names = new string[set.Length];
+        for (var index = 0; index < set.Length; index++)
+        {
+            names[index] = book.Seeds[set[index]].Key;
+        }
+
+        return string.Join('|', names);
+    }
+
+    private static void SortRoutes(SeedBook book, List<PlanStep[]> routes)
+    {
+        var keys = new Dictionary<PlanStep[], string>(routes.Count, ReferenceEqualityComparer.Instance);
+        for (var index = 0; index < routes.Count; index++)
+        {
+            keys[routes[index]] = RouteKey(book, routes[index]);
+        }
+
+        routes.Sort((first, second) =>
+        {
+            var byGathers = GatherCount(first).CompareTo(GatherCount(second));
+            return byGathers != 0 ? byGathers : string.CompareOrdinal(keys[first], keys[second]);
+        });
+    }
+
+    private static int GatherCount(PlanStep[] steps)
+    {
+        var count = 0;
+        for (var index = 0; index < steps.Length; index++)
+        {
+            if (steps[index].Kind == PlanStepKind.Gather)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static string RouteKey(SeedBook book, PlanStep[] steps)
+    {
+        var parts = new string[steps.Length];
+        for (var index = 0; index < steps.Length; index++)
+        {
+            var step = steps[index];
+            parts[index] = step.Kind == PlanStepKind.Gather
+                ? book.Seeds[step.Seed].Key
+                : string.Concat(book.Seeds[step.First].Key, "+", book.Seeds[step.Second].Key, ">",
+                    book.Seeds[step.Seed].Key);
+        }
+
+        Array.Sort(parts, StringComparer.Ordinal);
+        return string.Join('|', parts);
     }
 
     private static PlanStep[] Distinct(List<PlanStep> steps)

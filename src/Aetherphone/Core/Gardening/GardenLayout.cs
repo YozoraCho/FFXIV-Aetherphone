@@ -33,6 +33,13 @@ internal static class GardenLayout
 
     public static bool CanCross(GardenPatchKind kind) => kind != GardenPatchKind.Flowerpot;
 
+    public static int LayoutParent(GardenPatchKind kind, int bed)
+    {
+        var cell = CellOf(kind, bed);
+        var columns = Columns(kind);
+        return (cell / columns + cell % columns) % 2;
+    }
+
     public static int CellOf(GardenPatchKind kind, int bed) => kind == GardenPatchKind.Deluxe ? DeluxeCells[bed] : bed;
 
     public static int BedAtCell(GardenPatchKind kind, int cell)

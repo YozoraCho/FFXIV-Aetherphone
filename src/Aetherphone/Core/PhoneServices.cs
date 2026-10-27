@@ -74,6 +74,8 @@ internal sealed class PhoneServices : IDisposable
     public required GardenCatalog Garden { get; init; }
     public required GardenAlerts GardenAlerts { get; init; }
     public required SeedDiscovery SeedDiscovery { get; init; }
+    public required GardenInbox GardenInbox { get; init; }
+    public required GardenTracker GardenTracker { get; init; }
     public required ITextureProvider Textures { get; init; }
     public required Windows.Components.ArtworkCache Artwork { get; init; }
     public required WeatherService Weather { get; init; }
@@ -414,6 +416,9 @@ internal sealed class PhoneServices : IDisposable
             installer.Gate(GardenCatalog.AppId));
         var seedDiscovery = new SeedDiscovery(configuration, garden, notifications, framework,
             installer.Gate(GardenCatalog.AppId));
+        var gardenInbox = new GardenInbox();
+        var gardenTracker = new GardenTracker(configuration, garden, gardenInbox, notifications, chatGui,
+            Plugin.AddonLifecycle, framework, installer.Gate(GardenCatalog.AppId));
         var housingReminders = new HousingReminderService(configuration, framework, notifications, housing.Watch,
             housingGate);
         var confirm = new ConfirmService();
@@ -523,6 +528,8 @@ internal sealed class PhoneServices : IDisposable
             Garden = garden,
             GardenAlerts = gardenAlerts,
             SeedDiscovery = seedDiscovery,
+            GardenInbox = gardenInbox,
+            GardenTracker = gardenTracker,
             Textures = textures,
             Artwork = new Windows.Components.ArtworkCache(textures),
             Weather = weather,
@@ -719,6 +726,7 @@ internal sealed class PhoneServices : IDisposable
         FishingAlerts.Dispose();
         GardenAlerts.Dispose();
         SeedDiscovery.Dispose();
+        GardenTracker.Dispose();
         Housing.Dispose();
         Venues.Dispose();
         Hunts.Dispose();
