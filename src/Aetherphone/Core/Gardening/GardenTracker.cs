@@ -25,6 +25,7 @@ internal sealed class GardenTracker : IDisposable
     private const int SystemMessageKind = 57;
     private const int FirstSystemKind = 56;
     private const int LastSystemKind = 60;
+    private const uint GardenObjectId = 2003757;
     private const string HousingAddonPrefix = "Housing";
     private const string NoticeGroup = "greenthumb.track";
     private static readonly TimeSpan InteractionWindow = TimeSpan.FromSeconds(30);
@@ -76,7 +77,7 @@ internal sealed class GardenTracker : IDisposable
         }
 
         var name = args.AddonName;
-        if (!IsMenu(name))
+        if (!IsMenu(name) || !TargetIsGarden())
         {
             return;
         }
@@ -95,6 +96,19 @@ internal sealed class GardenTracker : IDisposable
         string.Equals(name, MenuAddon, StringComparison.Ordinal) ||
         string.Equals(name, IconMenuAddon, StringComparison.Ordinal) ||
         name.StartsWith(HousingAddonPrefix, StringComparison.Ordinal);
+
+    private static unsafe bool TargetIsGarden()
+    {
+        var targets = TargetSystem.Instance();
+        if (targets is null || targets->Target is null)
+        {
+            return false;
+        }
+
+        var target = targets->Target;
+        return target->ObjectKind == FFXIVClientStructs.FFXIV.Client.Game.Object.ObjectKind.EventObj &&
+               (target->BaseId == GardenObjectId || target->NameString.Length == 0);
+    }
 
     private static unsafe string DescribeTarget()
     {
@@ -161,7 +175,14 @@ internal sealed class GardenTracker : IDisposable
         if (catalog.State != GardenCatalogState.Ready || !InHousingArea() || !InventoryReader.ReadLocal(localRead))
         {
             hasBaseline = false;
+            interactionUtc = default;
+            statusUtc = default;
             return;
+        }
+
+        if (!InWindow(DateTime.UtcNow))
+        {
+            statusUtc = default;
         }
 
         CountGardenItems();
