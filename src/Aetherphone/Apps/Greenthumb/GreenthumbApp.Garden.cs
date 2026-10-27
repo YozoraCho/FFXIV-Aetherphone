@@ -372,7 +372,7 @@ internal sealed partial class GreenthumbApp
     {
         for (var index = 0; index < KindOrder.Length; index++)
         {
-            kindItems[index] = new ActionSheet.Item(Loc.T(PatchLabel.KindName(KindOrder[index])));
+            kindItems[index] = new ActionSheet.Item(PatchLabel.KindName(KindOrder[index]));
         }
 
         kindSheet.Open();

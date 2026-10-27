@@ -67,7 +67,7 @@ internal sealed partial class GreenthumbApp
         var navBar = AppHeader.BeginLargeTitle(context);
         using (AppSurface.Begin(navBar.Body))
         {
-            DrawPlaceHero(signal);
+            DrawPlaceHero();
             Gap(Metrics.Space.Lg);
             var patches = configuration.GreenthumbPatches;
             if (patches.Count == 0)
@@ -125,7 +125,7 @@ internal sealed partial class GreenthumbApp
         }
     }
 
-    private void DrawPlaceHero(GardenSignal signal)
+    private void DrawPlaceHero()
     {
         var scale = UiScale.Current;
         var drawList = ImGui.GetWindowDrawList();
@@ -134,8 +134,7 @@ internal sealed partial class GreenthumbApp
         var iconSize = PlaceIconUnits * scale;
         var titleHeight = Typography.LineHeight(TextStyles.Headline);
         var lineHeight = Typography.LineHeight(TextStyles.Footnote);
-        var lines = signal.Guessed ? 2 : 1;
-        var textHeight = titleHeight + lineHeight * lines;
+        var textHeight = titleHeight + lineHeight;
         var height = pad * 2f + MathF.Max(iconSize, textHeight);
         var min = ImGui.GetCursorScreenPos();
         var max = min + new Vector2(width, height);
@@ -149,13 +148,6 @@ internal sealed partial class GreenthumbApp
             Typography.FitText(placeTitle, textWidth, TextStyles.Headline), theme.TextStrong, TextStyles.Headline);
         Typography.Draw(drawList, new Vector2(textLeft, top + titleHeight), placeAgo, theme.TextMuted,
             TextStyles.Footnote);
-        if (signal.Guessed)
-        {
-            Typography.Draw(drawList, new Vector2(textLeft, top + titleHeight + lineHeight),
-                Typography.FitText(Loc.T(L.Greenthumb.PlaceGuess), textWidth, TextStyles.Footnote), TendInk,
-                TextStyles.Footnote);
-        }
-
         ImGui.Dummy(new Vector2(width, height));
     }
 

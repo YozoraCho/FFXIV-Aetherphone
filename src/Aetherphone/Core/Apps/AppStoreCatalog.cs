@@ -68,6 +68,8 @@ internal static class AppStoreCatalog
         ["skywatcher"] = new(L.Apps.Skywatcher, L.StoreCopy.SkywatcherSub, L.StoreCopy.SkywatcherBody,
             StoreCategory.World),
         ["fishing"] = new(L.Apps.Fishing, L.StoreCopy.FishingSub, L.StoreCopy.FishingBody, StoreCategory.World),
+        ["greenthumb"] = new(L.Apps.Greenthumb, L.StoreCopy.GreenthumbSub, L.StoreCopy.GreenthumbBody,
+            StoreCategory.World),
         ["hunts"] = new(L.Apps.Hunts, L.StoreCopy.HuntsSub, L.StoreCopy.HuntsBody, StoreCategory.World),
         ["strats"] = new(L.Apps.Strats, L.StoreCopy.StratsSub, L.StoreCopy.StratsBody, StoreCategory.World),
         ["housing"] = new(L.Apps.Housing, L.StoreCopy.HousingSub, L.StoreCopy.HousingBody, StoreCategory.World),
@@ -100,8 +102,6 @@ internal static class AppStoreCatalog
         ["shortcuts"] = new(L.Apps.Shortcuts, L.StoreCopy.ShortcutsSub, L.StoreCopy.ShortcutsBody,
             StoreCategory.Utilities),
         ["feedback"] = new(L.Apps.Feedback, L.StoreCopy.FeedbackSub, L.StoreCopy.FeedbackBody,
-            StoreCategory.Utilities),
-        ["greenthumb"] = new(L.Apps.Greenthumb, L.StoreCopy.GreenthumbSub, L.StoreCopy.GreenthumbBody,
             StoreCategory.Utilities),
     }.ToFrozenDictionary(StringComparer.Ordinal);
 

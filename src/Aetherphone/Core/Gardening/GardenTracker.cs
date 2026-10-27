@@ -22,14 +22,14 @@ internal sealed class GardenTracker : IDisposable
     private const string MenuAddon = "SelectString";
     private const string IconMenuAddon = "SelectIconString";
     private const int MaxLoggedOptions = 12;
-    private const int SystemMessageKind = 57;
-    private const int FirstSystemKind = 56;
-    private const int LastSystemKind = 60;
+    private const uint FirstGardenMessage = 4005;
+    private const uint LastGardenMessage = 4026;
+    private const uint TendMessage = 4017;
+    private const int MaxLoggedParameters = 4;
     private const uint GardenObjectId = 2003757;
     private const string HousingAddonPrefix = "Housing";
     private const string NoticeGroup = "greenthumb.track";
     private static readonly TimeSpan InteractionWindow = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan StatusSettle = TimeSpan.FromSeconds(3);
     private static readonly Vector4 Accent = AppAccents.For(GardenCatalog.AppId);
 
     private readonly Configuration configuration;
@@ -44,9 +44,8 @@ internal sealed class GardenTracker : IDisposable
     private Dictionary<uint, int> before = new();
     private Dictionary<uint, int> after = new();
     private bool hasBaseline;
+    private ushort saddlebagPages;
     private DateTime interactionUtc;
-    private DateTime statusUtc;
-    private bool changedSinceInteraction;
 
     public GardenTracker(Configuration configuration, GardenCatalog catalog, GardenInbox inbox,
         NotificationService notifications, IChatGui chat, IAddonLifecycle lifecycle, IFramework framework,
@@ -59,13 +58,17 @@ internal sealed class GardenTracker : IDisposable
         this.chat = chat;
         this.lifecycle = lifecycle;
         ticker = new FrameworkTicker(framework, TickIntervalMilliseconds, OnTick, gate);
-        chat.ChatMessage += OnChatMessage;
+        chat.LogMessage += OnLogMessage;
         lifecycle.RegisterListener(AddonEvent.PostSetup, OnAddonSetup);
     }
 
     private bool Tracking => configuration.GreenthumbTrackGarden;
 
+#if DEBUG
     private bool Logging => configuration.GreenthumbTrackingLog;
+#else
+    private static bool Logging => false;
+#endif
 
     private bool Watching => Tracking || Logging;
 
@@ -83,8 +86,6 @@ internal sealed class GardenTracker : IDisposable
         }
 
         interactionUtc = DateTime.UtcNow;
-        statusUtc = default;
-        changedSinceInteraction = false;
         if (Logging)
         {
             AepLog.Info(string.Concat(LogPrefix, "menu opened: ", name, " | target: ", DescribeTarget(),
@@ -143,24 +144,39 @@ internal sealed class GardenTracker : IDisposable
         return string.Join(" / ", parts);
     }
 
-    private void OnChatMessage(IHandleableChatMessage message)
+    private void OnLogMessage(ILogMessage message)
     {
-        var kind = (int)message.LogKind;
-        if (!Watching || kind < FirstSystemKind || kind > LastSystemKind || !InWindow(DateTime.UtcNow))
+        var id = message.LogMessageId;
+        if (!Watching || id < FirstGardenMessage || id > LastGardenMessage || !InHousingArea())
         {
             return;
         }
 
         if (Logging)
         {
-            AepLog.Info(string.Concat(LogPrefix, "game message (", kind.ToString(CultureInfo.InvariantCulture),
-                "): ", message.Message.TextValue));
+            AepLog.Info(string.Concat(LogPrefix, "garden message ", id.ToString(CultureInfo.InvariantCulture),
+                DescribeParameters(message)));
         }
 
-        if (kind == SystemMessageKind && statusUtc == default)
+        if (id == TendMessage)
         {
-            statusUtc = DateTime.UtcNow;
+            Report(new GardenSignal(GardenActionKind.Tend, -1, DateTime.UtcNow));
         }
+    }
+
+    private static string DescribeParameters(ILogMessage message)
+    {
+        var count = Math.Min(message.ParameterCount, MaxLoggedParameters);
+        var text = string.Empty;
+        for (var index = 0; index < count; index++)
+        {
+            if (message.TryGetIntParameter(index, out var value))
+            {
+                text = string.Concat(text, " | ", value.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        return text;
     }
 
     private void OnTick()
@@ -176,39 +192,28 @@ internal sealed class GardenTracker : IDisposable
         {
             hasBaseline = false;
             interactionUtc = default;
-            statusUtc = default;
             return;
-        }
-
-        if (!InWindow(DateTime.UtcNow))
-        {
-            statusUtc = default;
         }
 
         CountGardenItems();
         var nowUtc = DateTime.UtcNow;
+        if (localRead.Saddlebag.LoadedPages != saddlebagPages)
+        {
+            saddlebagPages = localRead.Saddlebag.LoadedPages;
+            hasBaseline = false;
+        }
+
         if (hasBaseline)
         {
             signals.Clear();
             GardenDelta.Classify(before, after, catalog, nowUtc, signals);
             if (signals.Count > 0 && InWindow(nowUtc))
             {
-                changedSinceInteraction = true;
                 for (var index = 0; index < signals.Count; index++)
                 {
                     Report(signals[index]);
                 }
             }
-        }
-
-        if (statusUtc != default && nowUtc - statusUtc >= StatusSettle)
-        {
-            if (!changedSinceInteraction)
-            {
-                Report(new GardenSignal(GardenActionKind.Tend, -1, statusUtc, true));
-            }
-
-            statusUtc = default;
         }
 
         (before, after) = (after, before);
@@ -224,11 +229,10 @@ internal sealed class GardenTracker : IDisposable
 
     private void AddCounts(List<InventoryStack> stacks)
     {
-        var fishmeal = catalog.FishmealItem;
         for (var index = 0; index < stacks.Count; index++)
         {
             var stack = stacks[index];
-            if (stack.ItemId != fishmeal && !catalog.TryIndexItem(stack.ItemId, out _) &&
+            if (!catalog.TryIndexItem(stack.ItemId, out _) &&
                 !catalog.TryIndexCrop(stack.ItemId, out _))
             {
                 continue;
@@ -244,11 +248,10 @@ internal sealed class GardenTracker : IDisposable
         if (Logging)
         {
             var seed = signal.Seed >= 0 ? string.Concat(": ", catalog.Book.Seeds[signal.Seed].Key) : string.Empty;
-            AepLog.Info(string.Concat(LogPrefix, "noticed ", signal.Kind.ToString(),
-                signal.Guessed ? " (guess)" : string.Empty, seed));
+            AepLog.Info(string.Concat(LogPrefix, "noticed ", signal.Kind.ToString(), seed));
         }
 
-        if (!Tracking || signal.Kind == GardenActionKind.Fertilize)
+        if (!Tracking)
         {
             return;
         }
@@ -283,7 +286,7 @@ internal sealed class GardenTracker : IDisposable
     public void Dispose()
     {
         ticker.Dispose();
-        chat.ChatMessage -= OnChatMessage;
+        chat.LogMessage -= OnLogMessage;
         lifecycle.UnregisterListener(AddonEvent.PostSetup, OnAddonSetup);
     }
 }

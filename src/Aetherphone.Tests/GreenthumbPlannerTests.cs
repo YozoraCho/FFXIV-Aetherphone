@@ -23,9 +23,54 @@ public sealed class GreenthumbPlannerTests
         Assert.Equal(48, book.Seeds[chamomile].WiltHours);
         Assert.Equal(240, book.Seeds[onion].GrowHours);
         Assert.Equal(120, book.Seeds[chamomile].GrowHours);
+        var items = new HashSet<uint>();
         foreach (var seed in book.Seeds)
         {
             Assert.True(seed.GrowHours > 0, seed.Key);
+            Assert.True(seed.Item != 0 && items.Add(seed.Item), seed.Key);
+            Assert.DoesNotContain(seed.Item, seed.Crops);
+        }
+
+        Assert.True(book.TryIndex("Tomato King Seeds", out var tomato));
+        Assert.Equal(8187u, book.Seeds[tomato].Item);
+        Assert.Equal(new uint[] { 8195 }, book.Seeds[tomato].Crops);
+    }
+
+    [Fact]
+    public void SeedSourcesPointAtGameData()
+    {
+        foreach (var seed in Book.Value.Seeds)
+        {
+            foreach (var source in seed.Sources)
+            {
+                switch (source.Kind)
+                {
+                    case SeedSourceKind.Node:
+                    case SeedSourceKind.Unspoiled:
+                        Assert.True(source.Level > 0 && source.Place != 0 && source.Zone != 0, seed.Key);
+                        break;
+                    case SeedSourceKind.Hunt:
+                        Assert.True(source.Item != 0 && source.Cost > 0, seed.Key);
+                        break;
+                    case SeedSourceKind.Airship:
+                        Assert.True(source.Zone != 0 && source.Sectors.Length > 0, seed.Key);
+                        break;
+                }
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(144, 36)]
+    [InlineData(168, 24)]
+    public void LongGrowingSeedsWiltSooner(int growHours, int wiltHours)
+    {
+        foreach (var seed in Book.Value.Seeds)
+        {
+            if (seed.GrowHours == growHours)
+            {
+                Assert.True(seed.WiltHours == wiltHours, seed.Key);
+            }
         }
     }
 
@@ -188,10 +233,9 @@ public sealed class GreenthumbPlannerTests
 
         GardenDelta.Classify(before, after, items, DateTime.UnixEpoch, signals);
 
-        Assert.Contains(new GardenSignal(GardenActionKind.Plant, 0, DateTime.UnixEpoch, false), signals);
-        Assert.Contains(new GardenSignal(GardenActionKind.Fertilize, -1, DateTime.UnixEpoch, false), signals);
-        Assert.Contains(new GardenSignal(GardenActionKind.Harvest, 0, DateTime.UnixEpoch, false), signals);
-        Assert.Equal(3, signals.Count);
+        Assert.Contains(new GardenSignal(GardenActionKind.Plant, 0, DateTime.UnixEpoch), signals);
+        Assert.Contains(new GardenSignal(GardenActionKind.Harvest, 0, DateTime.UnixEpoch), signals);
+        Assert.Equal(2, signals.Count);
     }
 
     [Fact]
@@ -202,7 +246,7 @@ public sealed class GreenthumbPlannerTests
 
         GardenDelta.Classify(before, new Dictionary<uint, int>(), new FakeGardenItems(), DateTime.UnixEpoch, signals);
 
-        Assert.Equal(new GardenSignal(GardenActionKind.Plant, 0, DateTime.UnixEpoch, false), Assert.Single(signals));
+        Assert.Equal(new GardenSignal(GardenActionKind.Plant, 0, DateTime.UnixEpoch), Assert.Single(signals));
     }
 
     [Fact]
@@ -212,7 +256,7 @@ public sealed class GreenthumbPlannerTests
         var now = DateTime.UtcNow;
         for (var index = 0; index < GardenInbox.Capacity + 2; index++)
         {
-            inbox.Add(new GardenSignal(GardenActionKind.Plant, index, now, false));
+            inbox.Add(new GardenSignal(GardenActionKind.Plant, index, now));
         }
 
         Assert.Equal(GardenInbox.Capacity, inbox.Count);
@@ -225,8 +269,6 @@ public sealed class GreenthumbPlannerTests
 
     private sealed class FakeGardenItems : IGardenItems
     {
-        public uint FishmealItem => 200;
-
         public bool TryIndexItem(uint itemId, out int index)
         {
             index = itemId == 100 ? 0 : itemId == 101 ? 1 : -1;

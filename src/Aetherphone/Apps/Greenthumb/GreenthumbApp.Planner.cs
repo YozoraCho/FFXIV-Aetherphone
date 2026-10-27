@@ -25,6 +25,9 @@ internal sealed partial class GreenthumbApp
     private const float StepLineAlpha = 0.35f;
     private const float StepLineUnits = 2f;
     private const float SegmentHeightUnits = 34f;
+    private const float TargetIconUnits = 44f;
+    private const int InputGather = 0;
+    private const int InputOwned = 1;
 
     private readonly string[] modeLabels = new string[3];
     private readonly string[] routeLabels = new string[MaxRouteChips];
@@ -32,6 +35,9 @@ internal sealed partial class GreenthumbApp
     private readonly Action decrementDepth;
     private readonly Action incrementDepth;
     private readonly ChipRail routeRail = new();
+    private readonly ChipRail inputRail = new();
+    private readonly string[] inputLabels = new string[2];
+    private readonly bool[] inputActive = new bool[2];
     private int plannerMode;
     private int target = -1;
     private int routeIndex;
@@ -57,9 +63,9 @@ internal sealed partial class GreenthumbApp
     private string[] reachableHeaders = Array.Empty<string>();
     private int[] reachableStarts = Array.Empty<int>();
     private string[] reachableIds = Array.Empty<string>();
-    private string[] starterHeaders = Array.Empty<string>();
-    private string[][] starterNames = Array.Empty<string[]>();
-    private string[][] starterSources = Array.Empty<string[]>();
+    private SourceCard[] starterCards = Array.Empty<SourceCard>();
+    private SourceCard targetSourceCard = new(string.Empty, Array.Empty<int>(), Array.Empty<string>(),
+        Array.Empty<string[]>());
     private PlanStatus starterStatus;
     private bool startFromOwned;
 
@@ -105,34 +111,65 @@ internal sealed partial class GreenthumbApp
 
     private void DrawPlannerInputs(bool withTarget)
     {
-        var rows = withTarget ? 3 : 2;
-        var card = GroupCard.Begin(theme, rows);
-        if (withTarget && SettingsRow.Disclosure(card.NextRow(), Loc.T(L.Greenthumb.TargetSeed), targetName, theme,
-                "greenthumb.planner.target"))
+        if (withTarget)
         {
-            router.Push(GreenthumbRoute.PickTarget());
-            pickerDirty = true;
+            DrawTargetCard();
+            Gap(Metrics.Space.Md);
         }
 
-        var gather = SettingsRow.Bool(card.NextRow(), Loc.T(L.Greenthumb.IncludeGatherable),
-            configuration.GreenthumbIncludeGatherable, theme, "greenthumb.planner.gather",
-            Loc.T(L.Greenthumb.IncludeGatherableHint));
-        if (gather != configuration.GreenthumbIncludeGatherable)
+        inputLabels[InputGather] = Loc.T(L.Greenthumb.IncludeGatherable);
+        inputLabels[InputOwned] = ownedLabel;
+        inputActive[InputGather] = configuration.GreenthumbIncludeGatherable;
+        inputActive[InputOwned] = false;
+        var tapped = inputRail.Draw(ui, inputLabels, inputActive, "greenthumb.planner.inputs");
+        if (tapped == InputGather)
         {
-            configuration.GreenthumbIncludeGatherable = gather;
+            configuration.GreenthumbIncludeGatherable = !configuration.GreenthumbIncludeGatherable;
             configuration.Save();
             plannerDirty = true;
         }
-
-        if (SettingsRow.Disclosure(card.NextRow(), Loc.T(L.Greenthumb.StartingFrom), ownedLabel, theme,
-                "greenthumb.planner.owned"))
+        else if (tapped == InputOwned)
         {
             activeTab = GreenthumbTab.Seeds;
             seedListDirty = true;
         }
 
-        card.End();
+        SettingsSection.Hint(Loc.T(L.Greenthumb.IncludeGatherableHint), theme);
         Gap(Metrics.Space.Lg);
+    }
+
+    private void DrawTargetCard()
+    {
+        var scale = UiScale.Current;
+        var drawList = ImGui.GetWindowDrawList();
+        var width = ScrollLayout.StableContentWidth();
+        var pad = CardPadUnits * scale;
+        var iconSize = TargetIconUnits * scale;
+        var min = ImGui.GetCursorScreenPos();
+        var max = min + new Vector2(width, iconSize + pad * 2f);
+        if (DrawCardButton(drawList, min, max, scale))
+        {
+            router.Push(GreenthumbRoute.PickTarget());
+            pickerDirty = true;
+        }
+
+        var centerY = (min.Y + max.Y) * 0.5f;
+        DrawSeedIcon(drawList, target >= 0 ? catalog.Icon(target) : 0,
+            new Vector2(min.X + pad + iconSize * 0.5f, centerY), iconSize);
+        var chevronX = max.X - pad - ChevronUnits * scale * 0.5f;
+        DrawChevron(drawList, new Vector2(chevronX, centerY), scale);
+        var textLeft = min.X + pad * 2f + iconSize;
+        var textWidth = chevronX - ChevronUnits * scale - textLeft;
+        var overline = Typography.LineHeight(TextStyles.Footnote);
+        var title = Typography.LineHeight(TextStyles.Headline);
+        var top = centerY - (overline + title) * 0.5f;
+        Typography.Draw(drawList, new Vector2(textLeft, top),
+            Typography.FitText(Loc.T(L.Greenthumb.TargetSeed), textWidth, TextStyles.Footnote), theme.TextMuted,
+            TextStyles.Footnote);
+        Typography.Draw(drawList, new Vector2(textLeft, top + overline),
+            Typography.FitText(targetName, textWidth, TextStyles.Headline),
+            target >= 0 ? theme.TextStrong : ui.Palette.Accent, TextStyles.Headline);
+        ImGui.Dummy(max - min);
     }
 
     private void DrawMake()
@@ -342,15 +379,9 @@ internal sealed partial class GreenthumbApp
             return;
         }
 
-        var seed = catalog.Book.Seeds[target];
-        if (seed.CanGather)
+        if (catalog.Book.Seeds[target].CanGather)
         {
-            SettingsSection.Hint(Loc.T(L.Greenthumb.CanGather), theme);
-            for (var index = 0; index < seed.Sources.Length; index++)
-            {
-                SettingsSection.Hint(seed.Sources[index], theme);
-            }
-
+            DrawSourceCard(targetSourceCard);
             return;
         }
 
@@ -366,25 +397,65 @@ internal sealed partial class GreenthumbApp
             return;
         }
 
-        if (starterHeaders.Length == 0)
+        if (starterCards.Length == 0)
         {
             SettingsSection.Hint(Loc.T(L.Greenthumb.NoSourceInfo), theme);
             return;
         }
 
-        for (var setIndex = 0; setIndex < starterHeaders.Length; setIndex++)
+        for (var setIndex = 0; setIndex < starterCards.Length; setIndex++)
         {
-            SettingsSection.Header(starterHeaders[setIndex], theme);
-            var names = starterNames[setIndex];
-            var card = GroupCard.Begin(theme, names.Length, StepRowUnits);
-            for (var index = 0; index < names.Length; index++)
-            {
-                DrawTwoLineRow(card.NextRow(), names[index], starterSources[setIndex][index], theme.TextStrong);
-            }
-
-            card.End();
+            DrawSourceCard(starterCards[setIndex]);
             Gap(Metrics.Space.Md);
         }
+    }
+
+    private void DrawSourceCard(SourceCard card)
+    {
+        var scale = UiScale.Current;
+        var drawList = ImGui.GetWindowDrawList();
+        var width = ScrollLayout.StableContentWidth();
+        var pad = CardPadUnits * scale;
+        var iconSize = StepIconUnits * scale;
+        var gap = Metrics.Space.Md * scale;
+        var textWidth = width - pad * 2f - iconSize - gap;
+        card.Wrap(textWidth);
+        var titleHeight = Typography.LineHeight(TextStyles.Headline);
+        var nameHeight = Typography.LineHeight(TextStyles.BodyEmphasized);
+        var lineHeight = Typography.LineHeight(TextStyles.Footnote);
+        var height = pad * 2f + titleHeight + Metrics.Space.Sm * scale;
+        for (var index = 0; index < card.Seeds.Length; index++)
+        {
+            height += MathF.Max(iconSize, nameHeight + card.Lines[index].Length * lineHeight);
+        }
+
+        height += gap * Math.Max(0, card.Seeds.Length - 1);
+        var min = ImGui.GetCursorScreenPos();
+        var max = min + new Vector2(width, height);
+        GroupCard.DrawSurface(drawList, min, max, theme, scale);
+        var left = min.X + pad;
+        Typography.Draw(drawList, new Vector2(left, min.Y + pad),
+            Typography.FitText(card.Title, width - pad * 2f, TextStyles.Headline), theme.TextStrong,
+            TextStyles.Headline);
+        var y = min.Y + pad + titleHeight + Metrics.Space.Sm * scale;
+        for (var index = 0; index < card.Seeds.Length; index++)
+        {
+            DrawSeedIcon(drawList, catalog.Icon(card.Seeds[index]), new Vector2(left + iconSize * 0.5f, y + iconSize * 0.5f), iconSize);
+            var textLeft = left + iconSize + gap;
+            Typography.Draw(drawList, new Vector2(textLeft, y),
+                Typography.FitText(card.Names[index], textWidth, TextStyles.BodyEmphasized), theme.TextStrong,
+                TextStyles.BodyEmphasized);
+            var lines = card.Lines[index];
+            for (var line = 0; line < lines.Length; line++)
+            {
+                Typography.Draw(drawList, new Vector2(textLeft, y + nameHeight + line * lineHeight), lines[line],
+                    theme.TextMuted, TextStyles.Footnote);
+            }
+
+            y += MathF.Max(iconSize, nameHeight + lines.Length * lineHeight) + gap;
+        }
+
+        ImGui.Dummy(new Vector2(width, height));
     }
 
     private void AdjustDepth(int delta)
@@ -519,7 +590,7 @@ internal sealed partial class GreenthumbApp
                 stepKinds[index] = Loc.T(L.Greenthumb.KindGather);
                 stepGathers[index] = true;
                 stepTitles[index] = catalog.Name(step.Seed);
-                stepSubtitles[index] = sources.Length > 0 ? sources[0] : string.Empty;
+                stepSubtitles[index] = sources.Length > 0 ? catalog.SourceText(sources[0]) : string.Empty;
                 continue;
             }
 
@@ -579,9 +650,11 @@ internal sealed partial class GreenthumbApp
     {
         if (target < 0)
         {
-            starterHeaders = Array.Empty<string>();
+            starterCards = Array.Empty<SourceCard>();
             return;
         }
+
+        BuildTargetSources();
 
         var routes = CrossbreedPlanner.FindRoutes(catalog.Book, owned, target, true);
         starterStatus = routes.Status;
@@ -593,20 +666,105 @@ internal sealed partial class GreenthumbApp
         }
 
         var count = Math.Min(sets.Count, MaxStarterSets);
-        starterHeaders = new string[count];
-        starterNames = new string[count][];
-        starterSources = new string[count][];
+        var paragraphs = new List<string>();
+        starterCards = new SourceCard[count];
         for (var setIndex = 0; setIndex < count; setIndex++)
         {
             var set = sets[setIndex];
-            starterHeaders[setIndex] = Loc.T(L.Greenthumb.StarterOption, setIndex + 1);
-            starterNames[setIndex] = new string[set.Length];
-            starterSources[setIndex] = new string[set.Length];
+            var details = new string[set.Length][];
+            var names = new string[set.Length];
             for (var index = 0; index < set.Length; index++)
             {
+                names[index] = catalog.Name(set[index]);
                 var seed = catalog.Book.Seeds[set[index]];
-                starterNames[setIndex][index] = catalog.Name(set[index]);
-                starterSources[setIndex][index] = seed.CanGather ? seed.Sources[0] : Loc.T(L.Greenthumb.CrossOnly);
+                paragraphs.Clear();
+                if (seed.CanGather)
+                {
+                    AddSourceDetail(seed.Sources[0], paragraphs);
+                }
+                else
+                {
+                    paragraphs.Add(Loc.T(L.Greenthumb.CrossOnly));
+                }
+
+                details[index] = paragraphs.ToArray();
+            }
+
+            starterCards[setIndex] = new SourceCard(Loc.T(L.Greenthumb.StarterOption, setIndex + 1), set, names,
+                details);
+        }
+    }
+
+    private void BuildTargetSources()
+    {
+        if (target < 0 || !catalog.Book.Seeds[target].CanGather)
+        {
+            return;
+        }
+
+        var sources = catalog.Book.Seeds[target].Sources;
+        var details = new List<string>();
+        for (var index = 0; index < sources.Length; index++)
+        {
+            AddSourceDetail(sources[index], details);
+        }
+
+        targetSourceCard = new SourceCard(Loc.T(L.Greenthumb.CanGather), new[] { target },
+            new[] { catalog.Name(target) }, new[] { details.ToArray() });
+    }
+
+    private void AddSourceDetail(SeedSource source, List<string> into)
+    {
+        into.Add(catalog.SourceText(source));
+        var note = GardenCatalog.SourceNote(source);
+        if (note.Length > 0)
+        {
+            into.Add(note);
+        }
+    }
+
+    private sealed class SourceCard
+    {
+        private float wrapWidth = -1f;
+
+        public SourceCard(string title, int[] seeds, string[] names, string[][] details)
+        {
+            Title = title;
+            Seeds = seeds;
+            Names = names;
+            Details = details;
+            Lines = new string[details.Length][];
+        }
+
+        public string Title { get; }
+
+        public int[] Seeds { get; }
+
+        public string[] Names { get; }
+
+        public string[][] Details { get; }
+
+        public string[][] Lines { get; }
+
+        public void Wrap(float textWidth)
+        {
+            if (MathF.Abs(wrapWidth - textWidth) <= 0.5f)
+            {
+                return;
+            }
+
+            wrapWidth = textWidth;
+            var lines = new List<string>();
+            for (var index = 0; index < Details.Length; index++)
+            {
+                lines.Clear();
+                var paragraphs = Details[index];
+                for (var paragraph = 0; paragraph < paragraphs.Length; paragraph++)
+                {
+                    lines.AddRange(Typography.WrapText(paragraphs[paragraph], TextStyles.Footnote, textWidth));
+                }
+
+                Lines[index] = lines.ToArray();
             }
         }
     }

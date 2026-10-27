@@ -468,3 +468,10 @@ The Greenthumb seed data (`src/Aetherphone/Gardening/Seeds.json`) and its crossb
   OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - Source: https://github.com/nick75g/FFXIV-Crossbreed-Helper
+
+## FFXIV Gardening
+
+The Greenthumb grow and wilt times in `src/Aetherphone/Gardening/Seeds.json` (`growHours`, `wiltHours`) come
+from the seed list on FFXIV Gardening.
+
+- Source: https://www.ffxivgardening.com/seed-list

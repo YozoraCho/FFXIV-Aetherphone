@@ -13,7 +13,8 @@ namespace Aetherphone.Apps.Greenthumb;
 internal sealed partial class GreenthumbApp : IResumableApp
 {
     private const int TabCount = 3;
-    private const long RefreshMilliseconds = 1000;
+    private const long RefreshMilliseconds = 60_000;
+    private static readonly string[] TabScrollIds = { "greenthumb.garden", "greenthumb.planner", "greenthumb.seeds" };
     private const float BottomBreathing = 24f;
     private const float SkeletonRowUnits = 44f;
     private const float SkeletonGapUnits = 8f;
@@ -49,6 +50,7 @@ internal sealed partial class GreenthumbApp : IResumableApp
     private int ownedCount;
     private int ownedVersion;
     private long nextRefresh;
+    private LanguageInfo? builtLanguage;
 
     public GreenthumbApp(Configuration configuration, GardenCatalog catalog, GardenAlerts alerts,
         SeedDiscovery discovery, GardenInbox inbox, GardenTracker tracker, ConfirmService confirm)
@@ -154,6 +156,7 @@ internal sealed partial class GreenthumbApp : IResumableApp
         {
             var navBar = AppHeader.BeginLargeTitle(context, false);
             string title;
+            using (UiScope.PushId(TabScrollIds[(int)activeTab]))
             using (AppSurface.Begin(navBar.Body))
             {
                 switch (activeTab)
@@ -294,13 +297,22 @@ internal sealed partial class GreenthumbApp : IResumableApp
 
     private void TickRefresh()
     {
+        if (!ReferenceEquals(builtLanguage, Loc.Current))
+        {
+            builtLanguage = Loc.Current;
+            ownedLabelCount = -1;
+            bannerBuiltInbox = -1;
+            MarkDirty();
+        }
+
         var now = Environment.TickCount64;
         if (now < nextRefresh)
         {
             return;
         }
 
-        nextRefresh = now + RefreshMilliseconds;
+        var intoMinute = DateTime.UtcNow.TimeOfDay.TotalMilliseconds % RefreshMilliseconds;
+        nextRefresh = now + RefreshMilliseconds - (long)intoMinute;
         gardenVersion++;
     }
 
@@ -335,24 +347,6 @@ internal sealed partial class GreenthumbApp : IResumableApp
     }
 
     private static void Gap(float units) => ImGui.Dummy(new Vector2(0f, units * UiScale.Current));
-
-    private void DrawTwoLineRow(Rect row, string title, string subtitle, Vector4 titleInk)
-    {
-        var drawList = ImGui.GetWindowDrawList();
-        var titleHeight = Typography.LineHeight(TextStyles.BodyEmphasized);
-        var subtitleHeight = Typography.LineHeight(TextStyles.Footnote);
-        var top = row.Center.Y - (titleHeight + subtitleHeight) * 0.5f;
-        var width = row.Width;
-        Typography.Draw(drawList, new Vector2(row.Min.X, top),
-            Typography.FitText(title, width, TextStyles.BodyEmphasized), titleInk, TextStyles.BodyEmphasized);
-        if (subtitle.Length == 0)
-        {
-            return;
-        }
-
-        Typography.Draw(drawList, new Vector2(row.Min.X, top + titleHeight),
-            Typography.FitText(subtitle, width, TextStyles.Footnote), theme.TextMuted, TextStyles.Footnote);
-    }
 
     public void Dispose()
     {

@@ -53,6 +53,7 @@ internal sealed partial class GreenthumbApp
             }
 
             SettingsSection.Hint(Loc.T(L.Greenthumb.AutoHint), theme);
+#if DEBUG
             Gap(Metrics.Space.Lg);
             SettingsSection.Header(Loc.T(L.Greenthumb.TesterSection), theme);
             var testerCard = GroupCard.Begin(theme, 1);
@@ -66,6 +67,7 @@ internal sealed partial class GreenthumbApp
             }
 
             testerCard.End();
+#endif
             Gap(BottomBreathing);
         }
 

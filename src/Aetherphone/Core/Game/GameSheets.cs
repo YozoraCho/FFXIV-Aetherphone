@@ -5,7 +5,7 @@ internal static class GameSheets
     private static readonly string[] SheetBoundApps =
     {
         "skywatcher", "dailies", "wallet", "jobs", "inventory", "market", "hunts", "maps", "housing", "collections",
-        "fishing",
+        "fishing", "greenthumb",
     };
 
     public static bool Available { get; private set; } = true;

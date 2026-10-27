@@ -4,16 +4,13 @@ internal enum GardenActionKind : byte
 {
     Plant,
     Tend,
-    Fertilize,
     Harvest,
 }
 
-internal readonly record struct GardenSignal(GardenActionKind Kind, int Seed, DateTime Utc, bool Guessed);
+internal readonly record struct GardenSignal(GardenActionKind Kind, int Seed, DateTime Utc);
 
 internal interface IGardenItems
 {
-    uint FishmealItem { get; }
-
     bool TryIndexItem(uint itemId, out int index);
 
     bool TryIndexCrop(uint itemId, out int index);
@@ -48,19 +45,13 @@ internal static class GardenDelta
 
         if (change == -1 && items.TryIndexItem(itemId, out var seed))
         {
-            into.Add(new GardenSignal(GardenActionKind.Plant, seed, utc, false));
-            return;
-        }
-
-        if (change == -1 && itemId != 0 && itemId == items.FishmealItem)
-        {
-            into.Add(new GardenSignal(GardenActionKind.Fertilize, -1, utc, false));
+            into.Add(new GardenSignal(GardenActionKind.Plant, seed, utc));
             return;
         }
 
         if (change > 0 && items.TryIndexCrop(itemId, out var crop))
         {
-            into.Add(new GardenSignal(GardenActionKind.Harvest, crop, utc, false));
+            into.Add(new GardenSignal(GardenActionKind.Harvest, crop, utc));
         }
     }
 }

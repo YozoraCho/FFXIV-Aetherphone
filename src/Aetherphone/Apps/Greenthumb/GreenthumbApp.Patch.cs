@@ -191,7 +191,7 @@ internal sealed partial class GreenthumbApp
 
                 crossPairTitles[crossPairCount] = Loc.T(L.Greenthumb.CrossPairTitle, bed + 1, other + 1);
                 crossPairBodies[crossPairCount] = Loc.T(L.Greenthumb.CrossPairBody, catalog.Name(first),
-                    catalog.Name(second), string.Join(", ", names));
+                    catalog.Name(second), string.Join(Loc.T(L.Greenthumb.ListSeparator), names));
                 crossPairCount++;
             }
         }
@@ -400,7 +400,7 @@ internal sealed partial class GreenthumbApp
         var width = ScrollLayout.StableContentWidth();
         var field = new Rect(origin, origin + new Vector2(width, GlassField.HeightUnits * scale));
         SearchBar.Surface(ImGui.GetWindowDrawList(), field, ControlInk.From(theme));
-        if (GlassField.Text(field, "##greenthumbPatchName", Loc.T(PatchLabel.KindName(patch.Kind)),
+        if (GlassField.Text(field, "##greenthumbPatchName", PatchLabel.KindName(patch.Kind),
                 ref patchNameDraft, theme, scale, MaxPatchNameLength, false, ImGuiInputTextFlags.None))
         {
             patch.Name = patchNameDraft.Trim();

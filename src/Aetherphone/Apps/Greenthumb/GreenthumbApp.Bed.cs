@@ -25,6 +25,7 @@ internal sealed partial class GreenthumbApp
     private const float PillPadUnits = 18f;
     private const float HarvestHeightUnits = 48f;
     private const float IconBackdropAlpha = 0.12f;
+    private const float CrossIconUnits = 32f;
 
     private readonly ActionSheet harvestSheet = new();
     private readonly Action decrementDays;
@@ -37,6 +38,16 @@ internal sealed partial class GreenthumbApp
     private int[] harvestSeeds = Array.Empty<int>();
     private string[] crossLabels = Array.Empty<string>();
     private string[] crossValues = Array.Empty<string>();
+    private int[] crossOthers = Array.Empty<int>();
+    private string[][] crossLabelLines = Array.Empty<string[]>();
+    private string[][] crossValueLines = Array.Empty<string[]>();
+    private string[] crossEmptyLines = Array.Empty<string>();
+    private string crossEmptyText = string.Empty;
+    private int crossBuiltVersion;
+    private int crossWrapVersion = -1;
+    private float crossWrapWidth;
+    private string[] growHintLines = Array.Empty<string>();
+    private float growHintWidth;
     private int crossCount;
     private int crossResultCount;
     private int bedBuiltVersion;
@@ -121,55 +132,207 @@ internal sealed partial class GreenthumbApp
         DrawBedHero();
         Gap(Metrics.Space.Md);
         DrawBedAction(bed);
+        Gap(Metrics.Space.Md);
+        DrawBedDetails();
+        Gap(Metrics.Space.Md);
+        DrawBedCrosses(patch);
         Gap(Metrics.Space.Lg);
-        var card = GroupCard.Begin(theme, 3);
-        if (SettingsRow.Disclosure(card.NextRow(), Loc.T(L.Greenthumb.Seed), bedSeedName, theme,
-                "greenthumb.bed.seed"))
+        DrawBedButtons(patch, bedIndex, bed);
+    }
+
+    private void DrawBedDetails()
+    {
+        var scale = UiScale.Current;
+        var drawList = ImGui.GetWindowDrawList();
+        var width = ScrollLayout.StableContentWidth();
+        var pad = CardPadUnits * scale;
+        var inner = width - pad * 2f;
+        WrapBedText(inner);
+        var labelHeight = Typography.LineHeight(TextStyles.Footnote);
+        var valueHeight = Typography.LineHeight(TextStyles.BodyEmphasized);
+        var stepperHeight = StepperHeightUnits * scale;
+        var statsHeight = labelHeight + valueHeight;
+        var growHeight = valueHeight + labelHeight * growHintLines.Length + Metrics.Space.Sm * scale * 2f +
+                         stepperHeight * 2f;
+        var height = pad * 4f + statsHeight + growHeight;
+        var min = ImGui.GetCursorScreenPos();
+        var max = min + new Vector2(width, height);
+        GroupCard.DrawSurface(drawList, min, max, theme, scale);
+        var left = min.X + pad;
+        var half = inner * 0.5f;
+        var top = min.Y + pad;
+        DrawStat(drawList, new Vector2(left, top), half - pad, Loc.T(L.Greenthumb.Planted), bedPlanted);
+        DrawStat(drawList, new Vector2(left + half + pad, top), half - pad, Loc.T(L.Greenthumb.Tended), bedTended);
+        var separator = ImGui.GetColorU32(theme.Separator);
+        var hairline = Metrics.Stroke.Hairline * scale;
+        drawList.AddLine(new Vector2(left + half, top), new Vector2(left + half, top + statsHeight), separator,
+            hairline);
+        var dividerY = top + statsHeight + pad;
+        drawList.AddLine(new Vector2(left, dividerY), new Vector2(max.X - pad, dividerY), separator, hairline);
+        var growTop = dividerY + pad;
+        Typography.Draw(drawList, new Vector2(left, growTop), Loc.T(L.Greenthumb.GrowingTime), theme.TextStrong,
+            TextStyles.BodyEmphasized);
+        var lineTop = growTop + valueHeight;
+        for (var index = 0; index < growHintLines.Length; index++)
+        {
+            Typography.Draw(drawList, new Vector2(left, lineTop + index * labelHeight), growHintLines[index],
+                theme.TextMuted, TextStyles.Footnote);
+        }
+
+        var stepperTop = lineTop + labelHeight * growHintLines.Length + Metrics.Space.Sm * scale;
+        StepperField.Draw(theme, new Rect(new Vector2(left, stepperTop),
+            new Vector2(max.X - pad, stepperTop + stepperHeight)), growDaysText, scale, decrementDays, incrementDays);
+        var hoursTop = stepperTop + stepperHeight + Metrics.Space.Sm * scale;
+        StepperField.Draw(theme, new Rect(new Vector2(left, hoursTop),
+            new Vector2(max.X - pad, hoursTop + stepperHeight)), growHoursText, scale, decrementHours,
+            incrementHours);
+        ImGui.Dummy(new Vector2(width, height));
+    }
+
+    private void DrawStat(ImDrawListPtr drawList, Vector2 origin, float width, string label, string value)
+    {
+        Typography.Draw(drawList, origin, Typography.FitText(label, width, TextStyles.Footnote), theme.TextMuted,
+            TextStyles.Footnote);
+        Typography.Draw(drawList, origin + new Vector2(0f, Typography.LineHeight(TextStyles.Footnote)),
+            Typography.FitText(value.Length > 0 ? value : Loc.T(L.Greenthumb.NotYet), width,
+                TextStyles.BodyEmphasized), theme.TextStrong, TextStyles.BodyEmphasized);
+    }
+
+    private void DrawBedCrosses(GardenPatch patch)
+    {
+        var scale = UiScale.Current;
+        var drawList = ImGui.GetWindowDrawList();
+        var width = ScrollLayout.StableContentWidth();
+        var pad = CardPadUnits * scale;
+        var iconSize = CrossIconUnits * scale;
+        var titleHeight = Typography.LineHeight(TextStyles.Headline);
+        var labelHeight = Typography.LineHeight(TextStyles.SubheadlineEmphasized);
+        var lineHeight = Typography.LineHeight(TextStyles.Footnote);
+        var textLeftOffset = iconSize + Metrics.Space.Md * scale;
+        WrapCrossText(width - pad * 2f - textLeftOffset, width - pad * 2f);
+        var bodyHeight = 0f;
+        if (crossCount == 0)
+        {
+            bodyHeight = lineHeight * crossEmptyLines.Length;
+        }
+        else
+        {
+            for (var index = 0; index < crossCount; index++)
+            {
+                bodyHeight += CrossEntryHeight(index, iconSize, labelHeight, lineHeight);
+            }
+
+            bodyHeight += Metrics.Space.Md * scale * (crossCount - 1);
+        }
+
+        var height = pad * 2f + titleHeight + Metrics.Space.Sm * scale + bodyHeight;
+        var min = ImGui.GetCursorScreenPos();
+        var max = min + new Vector2(width, height);
+        GroupCard.DrawSurface(drawList, min, max, theme, scale);
+        var left = min.X + pad;
+        Typography.Draw(drawList, new Vector2(left, min.Y + pad), Loc.T(L.Greenthumb.CrossSection),
+            theme.TextStrong, TextStyles.Headline);
+        var y = min.Y + pad + titleHeight + Metrics.Space.Sm * scale;
+        if (crossCount == 0)
+        {
+            for (var index = 0; index < crossEmptyLines.Length; index++)
+            {
+                Typography.Draw(drawList, new Vector2(left, y + index * lineHeight), crossEmptyLines[index],
+                    theme.TextMuted, TextStyles.Footnote);
+            }
+        }
+        else
+        {
+            for (var index = 0; index < crossCount; index++)
+            {
+                DrawSeedIcon(drawList, catalog.Icon(crossOthers[index]),
+                    new Vector2(left + iconSize * 0.5f, y + iconSize * 0.5f), iconSize);
+                var textLeft = left + textLeftOffset;
+                var labels = crossLabelLines[index];
+                for (var line = 0; line < labels.Length; line++)
+                {
+                    Typography.Draw(drawList, new Vector2(textLeft, y + line * labelHeight), labels[line],
+                        theme.TextStrong, TextStyles.SubheadlineEmphasized);
+                }
+
+                var valueTop = y + labels.Length * labelHeight;
+                var values = crossValueLines[index];
+                for (var line = 0; line < values.Length; line++)
+                {
+                    Typography.Draw(drawList, new Vector2(textLeft, valueTop + line * lineHeight), values[line],
+                        ui.Palette.Accent, TextStyles.Footnote);
+                }
+
+                y += CrossEntryHeight(index, iconSize, labelHeight, lineHeight) + Metrics.Space.Md * scale;
+            }
+        }
+
+        ImGui.Dummy(new Vector2(width, height));
+    }
+
+    private float CrossEntryHeight(int index, float iconSize, float labelHeight, float lineHeight) =>
+        MathF.Max(iconSize, crossLabelLines[index].Length * labelHeight + crossValueLines[index].Length * lineHeight);
+
+    private void DrawBedButtons(GardenPatch patch, int bedIndex, GardenBed bed)
+    {
+        var scale = UiScale.Current;
+        var width = ScrollLayout.StableContentWidth();
+        var gap = Metrics.Space.Md * scale;
+        var buttonWidth = (width - gap) * 0.5f;
+        var height = HarvestHeightUnits * scale;
+        var min = ImGui.GetCursorScreenPos();
+        if (ui.GhostButton(new Rect(min, min + new Vector2(buttonWidth, height)), Loc.T(L.Greenthumb.ChangeSeed)))
         {
             router.Push(GreenthumbRoute.PickForBed(patch.Id, bedIndex));
             pickerDirty = true;
         }
 
-        SettingsRow.Info(card.NextRow(), Loc.T(L.Greenthumb.Planted), bedPlanted, theme, "greenthumb.bed.planted");
-        SettingsRow.Info(card.NextRow(), Loc.T(L.Greenthumb.Tended), bedTended, theme, "greenthumb.bed.tended");
-        card.End();
-
-        Gap(Metrics.Space.Lg);
-        SettingsSection.Header(Loc.T(L.Greenthumb.GrowingTime), theme, Loc.T(L.Greenthumb.GrowingTimeHint));
-        var growCard = GroupCard.Begin(theme, 2);
-        DrawStepperRow(growCard.NextRow(), growDaysText, decrementDays, incrementDays);
-        DrawStepperRow(growCard.NextRow(), growHoursText, decrementHours, incrementHours);
-        growCard.End();
-
-        Gap(Metrics.Space.Lg);
-        SettingsSection.Header(Loc.T(L.Greenthumb.CrossSection), theme);
-        if (!GardenLayout.CanCross(patch.Kind))
-        {
-            SettingsSection.Hint(Loc.T(L.Greenthumb.NoCrossPot), theme);
-        }
-        else if (crossCount == 0)
-        {
-            SettingsSection.Hint(Loc.T(L.Greenthumb.NoCross), theme);
-        }
-        else
-        {
-            var crossCard = GroupCard.Begin(theme, crossCount, 60f);
-            for (var index = 0; index < crossCount; index++)
-            {
-                DrawTwoLineRow(crossCard.NextRow(), crossLabels[index], crossValues[index], theme.TextStrong);
-            }
-
-            crossCard.End();
-        }
-
-        Gap(Metrics.Space.Lg);
-        var clearCard = GroupCard.Begin(theme, 1);
-        if (SettingsRow.Action(clearCard.NextRow(), Loc.T(L.Greenthumb.ClearBed), theme.Danger, theme))
+        var clearMin = min + new Vector2(buttonWidth + gap, 0f);
+        if (ui.DangerGhostButton(new Rect(clearMin, clearMin + new Vector2(buttonWidth, height)),
+                Loc.T(L.Greenthumb.ClearBed)))
         {
             AskClearBed(bed);
         }
 
-        clearCard.End();
+        ImGui.Dummy(new Vector2(width, height));
+    }
+
+    private void WrapBedText(float width)
+    {
+        if (MathF.Abs(growHintWidth - width) <= 0.5f && growHintLines.Length > 0)
+        {
+            return;
+        }
+
+        growHintWidth = width;
+        growHintLines = Typography.WrapText(Loc.T(L.Greenthumb.GrowingTimeHint), TextStyles.Footnote, width);
+    }
+
+    private void WrapCrossText(float textWidth, float fullWidth)
+    {
+        if (crossWrapVersion == crossBuiltVersion && MathF.Abs(crossWrapWidth - textWidth) <= 0.5f)
+        {
+            return;
+        }
+
+        crossWrapVersion = crossBuiltVersion;
+        crossWrapWidth = textWidth;
+        if (crossLabelLines.Length < crossCount)
+        {
+            crossLabelLines = new string[GardenLayout.MaxNeighbors][];
+            crossValueLines = new string[GardenLayout.MaxNeighbors][];
+        }
+
+        for (var index = 0; index < crossCount; index++)
+        {
+            crossLabelLines[index] = Typography.WrapText(crossLabels[index], TextStyles.SubheadlineEmphasized,
+                textWidth);
+            crossValueLines[index] = Typography.WrapText(crossValues[index], TextStyles.Footnote, textWidth);
+        }
+
+        crossEmptyLines = crossEmptyText.Length > 0
+            ? Typography.WrapText(crossEmptyText, TextStyles.Footnote, fullWidth)
+            : Array.Empty<string>();
     }
 
     private void DrawBedHero()
@@ -265,15 +428,6 @@ internal sealed partial class GreenthumbApp
         }
 
         ImGui.Dummy(new Vector2(width, height));
-    }
-
-    private void DrawStepperRow(Rect row, string valueText, Action decrement, Action increment)
-    {
-        var scale = UiScale.Current;
-        var height = StepperHeightUnits * scale;
-        var rect = new Rect(new Vector2(row.Min.X, row.Center.Y - height * 0.5f),
-            new Vector2(row.Max.X, row.Center.Y + height * 0.5f));
-        StepperField.Draw(theme, rect, valueText, scale, decrement, increment);
     }
 
     private void AdjustGrowHours(int delta)
@@ -398,6 +552,8 @@ internal sealed partial class GreenthumbApp
     {
         crossCount = 0;
         crossResultCount = 0;
+        crossBuiltVersion++;
+        crossEmptyText = Loc.T(GardenLayout.CanCross(patch.Kind) ? L.Greenthumb.NoCross : L.Greenthumb.NoCrossPot);
         if (!bed.IsPlanted || !catalog.TryIndex(bed.Seed, out var seed))
         {
             return;
@@ -408,6 +564,7 @@ internal sealed partial class GreenthumbApp
         {
             crossLabels = new string[GardenLayout.MaxNeighbors];
             crossValues = new string[GardenLayout.MaxNeighbors];
+            crossOthers = new int[GardenLayout.MaxNeighbors];
         }
 
         for (var index = 0; index < neighbors; index++)
@@ -431,9 +588,9 @@ internal sealed partial class GreenthumbApp
                 AddCrossResult(results[resultIndex]);
             }
 
-            crossLabels[crossCount] = string.Concat(Loc.T(L.Greenthumb.CrossWith, neighborBuffer[index] + 1), ": ",
-                catalog.Name(other));
-            crossValues[crossCount] = string.Join(", ", names);
+            crossLabels[crossCount] = Loc.T(L.Greenthumb.CrossWith, neighborBuffer[index] + 1, catalog.Name(other));
+            crossValues[crossCount] = string.Join(Loc.T(L.Greenthumb.ListSeparator), names);
+            crossOthers[crossCount] = other;
             crossCount++;
         }
     }

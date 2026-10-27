@@ -133,7 +133,7 @@ internal sealed class SeedDiscovery : IDisposable
             names[index] = catalog.Name(found[index]);
         }
 
-        var body = string.Join(", ", names);
+        var body = string.Join(Loc.T(L.Greenthumb.ListSeparator), names);
         if (found.Count > shown)
         {
             body = Loc.T(L.Greenthumb.AndMore, body, found.Count - shown);
