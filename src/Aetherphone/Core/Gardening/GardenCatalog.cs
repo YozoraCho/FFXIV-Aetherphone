@@ -180,9 +180,17 @@ internal sealed class GardenCatalog : IGardenItems
             for (var index = 0; index < result.Length; index++)
             {
                 var crop = CropName(result[index]);
-                if (crop.Length > 0)
+                if (crop.Length == 0)
                 {
-                    crops.TryAdd(crop, index);
+                    continue;
+                }
+
+                crops.TryAdd(crop, index);
+                crops.TryAdd(string.Concat(crop, "s"), index);
+                crops.TryAdd(string.Concat(crop, "es"), index);
+                if (crop.EndsWith('y'))
+                {
+                    crops.TryAdd(string.Concat(crop[..^1], "ies"), index);
                 }
             }
 
