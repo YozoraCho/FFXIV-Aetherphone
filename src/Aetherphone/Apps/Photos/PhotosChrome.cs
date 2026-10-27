@@ -19,6 +19,8 @@ internal static class PhotosChrome
     private const float BadgeGlyph = 16f;
     private const float FavoriteBadgeGlyph = 13f;
     private const float FavoriteBadgeInset = 7f;
+    private const float GifBadgePadX = 5f;
+    private const float GifBadgePadY = 1.5f;
     private const float SelectionGlyph = 22f;
     private const float SelectionInset = 6f;
     private const float SelectionVeilAlpha = 0.22f;
@@ -156,6 +158,18 @@ internal static class PhotosChrome
         PhoneIcon.Draw(drawList, center + new Vector2(0f, 1f * scale), PhoneIcons.HeartFilled,
             Palette.WithAlpha(Black, ShadowAlpha), glyph);
         PhoneIcon.Draw(drawList, center, PhoneIcons.HeartFilled, White, glyph);
+    }
+
+    public static void GifBadge(ImDrawListPtr drawList, Vector2 min, Vector2 max, string label, float scale)
+    {
+        var size = Typography.Measure(label, TextStyles.Caption2);
+        var padX = GifBadgePadX * scale;
+        var padY = GifBadgePadY * scale;
+        var inset = FavoriteBadgeInset * scale;
+        var badgeMax = new Vector2(max.X - inset, max.Y - inset);
+        var badgeMin = badgeMax - size - new Vector2(padX * 2f, padY * 2f);
+        drawList.AddRectFilled(badgeMin, badgeMax, ImGui.GetColorU32(ScrimInk), (badgeMax.Y - badgeMin.Y) * 0.5f);
+        Typography.Draw(drawList, badgeMin + new Vector2(padX, padY), label, White, TextStyles.Caption2);
     }
 
     public static void SelectionMark(ImDrawListPtr drawList, Vector2 min, Vector2 max, bool selected, Vector4 accent,

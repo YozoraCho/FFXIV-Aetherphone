@@ -45,7 +45,20 @@ internal sealed class PhotoLibrary
         }
 
         pendingWrites[Path.GetFileName(path)] = 0;
-        _ = Task.Run(() => WriteAndAnnounce(path, pixels, width, height));
+        _ = Task.Run(() => WriteAndAnnounce(path, () => Write(path, pixels, width, height)));
+        return path;
+    }
+
+    public string? SaveEncoded(byte[] encoded, string extension)
+    {
+        var path = FreePath(directory, DateTime.Now, extension);
+        if (path is null)
+        {
+            return null;
+        }
+
+        pendingWrites[Path.GetFileName(path)] = 0;
+        _ = Task.Run(() => WriteAndAnnounce(path, () => WriteEncoded(path, encoded)));
         return path;
     }
 
@@ -57,11 +70,11 @@ internal sealed class PhotoLibrary
         }
     }
 
-    private void WriteAndAnnounce(string path, byte[] pixels, int width, int height)
+    private void WriteAndAnnounce(string path, Func<bool> write)
     {
         try
         {
-            if (!Write(path, pixels, width, height))
+            if (!write())
             {
                 TryDelete(path);
             }
@@ -365,7 +378,19 @@ internal sealed class PhotoLibrary
     {
         try
         {
-            var encoded = PngWriter.Encode(pixels, width, height);
+            return WriteEncoded(path, PngWriter.Encode(pixels, width, height));
+        }
+        catch (Exception exception)
+        {
+            Plugin.Log.Error(exception, "[Photos] failed to encode photo");
+            return false;
+        }
+    }
+
+    private static bool WriteEncoded(string path, byte[] encoded)
+    {
+        try
+        {
             var temp = path + ".tmp";
             File.WriteAllBytes(temp, encoded);
             File.Move(temp, path, true);

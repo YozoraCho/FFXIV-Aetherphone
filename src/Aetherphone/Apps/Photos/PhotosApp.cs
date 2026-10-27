@@ -588,7 +588,7 @@ internal sealed partial class PhotosApp : IResumableApp
 
     private IDalamudTextureWrap? GetFull(string path)
     {
-        if (fullImages.Get(path) is { } wrap)
+        if (fullImages.GetAt(new LedgerKey(path, TextureSizes.Native), ImGui.GetTime()) is { } wrap)
         {
             return wrap;
         }
@@ -643,6 +643,19 @@ internal sealed partial class PhotosApp : IResumableApp
         {
             var token = cancellation.Token;
             var bytes = await File.ReadAllBytesAsync(path, token).ConfigureAwait(false);
+            var kind = ImageProcessor.AnimationKindOf(bytes);
+            if (kind != AnimationKind.None)
+            {
+                var animation = await ImageProcessor.DecodeAnimationAsync(Plugin.TextureProvider, bytes, kind, path,
+                    0, token).ConfigureAwait(false);
+                if (!fullImages.TryAddAnimated(path, animation))
+                {
+                    animation.Dispose();
+                }
+
+                return;
+            }
+
             var wrap = await ImageProcessor.DecodeToTextureAsync(Plugin.TextureProvider, bytes, path,
                 ImageProcessor.MaxLocalDecodePixels, token).ConfigureAwait(false);
             if (!fullImages.TryAdd(path, wrap))

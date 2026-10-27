@@ -110,6 +110,11 @@ internal sealed partial class PhotosApp
             PhotosChrome.FavoriteBadge(drawList, min, max, scale);
         }
 
+        if (GifMedia.IsGif(path))
+        {
+            PhotosChrome.GifBadge(drawList, min, max, Loc.T(L.Photos.GifBadge), scale);
+        }
+
         if (selecting)
         {
             PhotosChrome.SelectionMark(drawList, min, max, selection.Contains(path), ui.Accent, scale);

@@ -1249,8 +1249,7 @@ internal abstract class ChatThreadView<TMessage, TThread> : IDisposable, IChatTr
                     : raw;
                 if (bytes is not null)
                 {
-                    var (pixels, width, height) = ImageProcessor.DecodeRgba32(bytes);
-                    library.Save(pixels, width, height);
+                    SaveToLibrary(bytes);
                     succeeded = true;
                 }
             }
@@ -1264,6 +1263,25 @@ internal abstract class ChatThreadView<TMessage, TThread> : IDisposable, IChatTr
                 imageSaveBusy = false;
             }
         });
+    }
+
+    private void SaveToLibrary(byte[] bytes)
+    {
+        var kind = ImageProcessor.AnimationKindOf(bytes);
+        if (kind == AnimationKind.Gif)
+        {
+            library.SaveEncoded(bytes, ".gif");
+            return;
+        }
+
+        if (kind == AnimationKind.Png)
+        {
+            library.SaveEncoded(bytes, ".png");
+            return;
+        }
+
+        var (pixels, width, height) = ImageProcessor.DecodeRgba32(bytes);
+        library.Save(pixels, width, height);
     }
 
     protected void OpenImagePicker(string threadId)

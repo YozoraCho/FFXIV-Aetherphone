@@ -9019,6 +9019,7 @@ internal static class L
         public static readonly LocString Places = new("photos.places", "Places");
         public static readonly LocString More = new("photos.more", "More");
         public static readonly LocString ShowInFolder = new("photos.showInFolder", "Show in Folder");
+        public static readonly LocString GifBadge = new("photos.gifBadge", "GIF");
         public static readonly LocString InfoPlace = new("photos.infoPlace", "Place");
     }
 
