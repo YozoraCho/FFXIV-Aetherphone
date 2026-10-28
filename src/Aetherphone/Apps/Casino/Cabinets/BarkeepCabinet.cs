@@ -175,6 +175,7 @@ internal sealed class BarkeepCabinet : ICabinetIdle
 
     public void Draw(CasinoStage stage, in CasinoStageFrame frame, AppSkin ui)
     {
+        DropRoundsShownElsewhere();
         var scale = UiScale.Current;
         var drawList = ImGui.GetWindowDrawList();
         var delta = frame.DeltaSeconds;
@@ -279,6 +280,18 @@ internal sealed class BarkeepCabinet : ICabinetIdle
 
         startRequested = false;
         inlineReason = CasinoReasons.Unreachable;
+    }
+
+    private void DropRoundsShownElsewhere()
+    {
+        play.DropSlotsResults();
+        play.DropScratchResult();
+        if (startRequested || finishSent)
+        {
+            return;
+        }
+
+        play.TakeRoundFailure();
     }
 
     private void BeginShift(BarkeepShift next, BarkeepMode nextMode, ulong seed)
