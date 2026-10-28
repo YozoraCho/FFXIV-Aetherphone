@@ -1168,6 +1168,7 @@
   "gifs.consentDecline": "Nicht jetzt",
   "gifs.setting": "GIFs von KLIPY",
   "gifs.settingHint": "GIFs in Chirper, Aethergram und ChocoChat suchen und KLIPY-GIFs in Beiträgen, Kommentaren und Nachrichten anzeigen. Suchen und Bilder laden direkt von KLIPY, das deine IP-Adresse sieht.",
+  "changelog.r1411.autoplay": "Behoben, dass das automatische Spielen manchmal die nächste Runde startete, bevor die letzte angezeigt wurde, sodass zwei Einsätze von deinem Stapel abgingen, aber nur eine Runde zu sehen war. Jedes Spiel wartet jetzt, bis jedes Ergebnis zu Ende gespielt ist",
   "changelog.r1410.maintenance": "Einen Wartungsbildschirm hinzugefügt: Während Aethernet für eine geplante Wartung offline ist, zeigen Online-Apps einen Countdown bis zur erwarteten Rückkehr, und Apps, die Aethernet nicht brauchen, funktionieren weiter",
   "changelog.r1400.0": "Prism hinzugefügt, ein wöchentlicher Glamour-Wettbewerb mit einem neuen Thema jeden Montag zum täglichen Reset, beigetragen von t3sco. Erkunde gemoddete oder Vanilla-Projektionen anderer Spieler, probiere jede Vanilla-Projektion mit einem Tipp an, like oder speichere deine Favoriten, bewahre all deine Projektionen in einer Garderobe auf und nimm am wöchentlichen Wettbewerb teil, um Gil, Aether Coin, einen Rahmen und ein Abzeichen zu gewinnen",
   "changelog.r1400.36": "Bildschirm-Modus zur Kamera hinzugefügt, der das ganze Spielfenster aufnimmt; das Handy rückt vorher aus dem Bild und zählt herunter, beigetragen von t3sco",

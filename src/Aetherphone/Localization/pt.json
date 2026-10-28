@@ -1168,6 +1168,7 @@
   "gifs.consentDecline": "Agora não",
   "gifs.setting": "GIFs do KLIPY",
   "gifs.settingHint": "Busque GIFs no Chirper, no Aethergram e no ChocoChat, e mostre GIFs do KLIPY em posts, comentários e mensagens. Buscas e imagens carregam direto do KLIPY, que vê seu endereço IP.",
+  "changelog.r1411.autoplay": "Corrigimos o jogo automático que às vezes começava a próxima rodada antes de mostrar a anterior, fazendo duas apostas saírem da sua pilha com só uma jogada na tela. Agora cada jogo espera cada resultado terminar de aparecer",
   "changelog.r1410.maintenance": "Adicionamos uma tela de manutenção: enquanto a Aethernet estiver fora do ar por uma manutenção programada, os apps online mostram uma contagem regressiva até a volta prevista, e os apps que não precisam da Aethernet continuam funcionando",
   "changelog.r1400.0": "Adicionamos o Prism, um concurso semanal de glamour com um tema novo toda segunda-feira no reset diário, contribuição de t3sco. Explore os glamours Com mods ou Vanilla de outros jogadores, experimente qualquer glamour Vanilla com um toque, curta ou salve seus favoritos, guarde todos os seus glamours em um guarda-roupa e participe do concurso semanal para ganhar gil, Aether Coin, uma moldura e um emblema",
   "changelog.r1400.36": "Adicionamos o modo Tela à Câmera, que captura a janela inteira do jogo; o celular sai da frente e faz uma contagem regressiva antes, contribuição de t3sco",

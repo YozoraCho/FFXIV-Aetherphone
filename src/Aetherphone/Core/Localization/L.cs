@@ -2352,6 +2352,12 @@ internal static class L
         public static readonly LocString SectionSounds = new("changelog.sectionSounds", "Sounds");
         public static readonly LocString SectionHalloween = new("changelog.sectionHalloween", "Halloween");
 
+        public static readonly LocString[] Release1411AutoPlay =
+        {
+            new("changelog.r1411.autoplay",
+                "Fixed auto play sometimes starting the next round before the last one was shown, so two bets left your stack with only one roll on screen. Every game now waits until each result has played out"),
+        };
+
         public static readonly LocString[] Release1410Maintenance =
         {
             new("changelog.r1410.maintenance",

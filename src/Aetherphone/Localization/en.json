@@ -1168,6 +1168,7 @@
   "gifs.consentDecline": "Not now",
   "gifs.setting": "GIFs from KLIPY",
   "gifs.settingHint": "Search GIFs in Chirper, Aethergram and ChocoChat, and show KLIPY GIFs in posts, comments and messages. Searches and images load straight from KLIPY, which sees your IP address.",
+  "changelog.r1411.autoplay": "Fixed auto play sometimes starting the next round before the last one was shown, so two bets left your stack with only one roll on screen. Every game now waits until each result has played out",
   "changelog.r1410.maintenance": "Added a maintenance screen: while Aethernet is down for planned maintenance, online apps show a countdown to when it should be back, and apps that don't need Aethernet keep working",
   "changelog.r1400.0": "Added Prism, a weekly glamour contest with a new theme every Monday at the daily reset, contributed by t3sco. Explore other players' Modded or Vanilla glams, try on any vanilla glam in one tap, like or save the ones you love, keep all your glams in a wardrobe, and enter the weekly contest to win gil, Aether Coin, a frame and a badge",
   "changelog.r1400.36": "Added a Screen mode to Camera that shoots the whole game window, with the phone sliding out of the way and counting down first, contributed by t3sco",

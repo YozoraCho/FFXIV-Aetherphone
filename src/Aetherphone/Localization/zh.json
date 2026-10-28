@@ -1168,6 +1168,7 @@
   "gifs.consentDecline": "暂不",
   "gifs.setting": "来自 KLIPY 的 GIF",
   "gifs.settingHint": "在 Chirper、Aethergram 和 ChocoChat 中搜索 GIF，并在帖子、评论和消息中显示 KLIPY GIF。搜索和图片直接从 KLIPY 加载，KLIPY 能看到你的 IP 地址。",
+  "changelog.r1411.autoplay": "修复了自动游戏有时会在上一局显示之前就开始下一局的问题，导致屏幕上只显示一次结果却扣除了两次筹码。现在每个游戏都会等每个结果完整播放后再继续",
   "changelog.r1410.maintenance": "新增了维护画面：Aethernet 因计划维护暂停期间，在线应用会显示预计恢复前的倒计时，无需 Aethernet 的应用仍可正常使用",
   "changelog.r1400.0": "新增了Prism，每周一在每日重置时开启新主题的每周幻化比赛，由t3sco贡献。浏览其他玩家的模组或原版幻化，一键试穿任意原版幻化，给喜欢的幻化点赞或保存，把你所有的幻化收进衣橱，并参加每周比赛，赢取金币、以太积分、头像框和徽章",
   "changelog.r1400.36": "相机新增了全屏模式，可拍摄整个游戏窗口，拍摄前手机会先移开并倒计时，由t3sco贡献",
