@@ -181,6 +181,7 @@ internal sealed class ScratchCabinet : ICabinetIdle
 
     private void ConsumeResults(CasinoStage stage, in CasinoStageFrame frame)
     {
+        play.DropSlotsResults();
         var card = play.TakeScratchResult();
         if (card is not null)
         {

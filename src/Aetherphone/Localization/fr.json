@@ -1168,6 +1168,7 @@
   "gifs.consentDecline": "Plus tard",
   "gifs.setting": "GIF de KLIPY",
   "gifs.settingHint": "Recherche des GIF dans Chirper, Aethergram et ChocoChat, et affiche les GIF KLIPY dans les publications, les commentaires et les messages. Les recherches et les images se chargent directement depuis KLIPY, qui voit ton adresse IP.",
+  "changelog.r1411.autoplay": "Correction du jeu automatique qui lançait parfois la manche suivante avant d'afficher la précédente, si bien que deux mises quittaient ta pile pour un seul tirage à l'écran. Chaque jeu attend désormais que chaque résultat soit entièrement joué",
   "changelog.r1410.maintenance": "Ajout d'un écran de maintenance : pendant qu'Aethernet est arrêté pour une maintenance prévue, les applis en ligne affichent un compte à rebours jusqu'à son retour, et les applis qui n'ont pas besoin d'Aethernet fonctionnent toujours",
   "changelog.r1400.0": "Ajout de Prism, un concours hebdomadaire de glamour avec un nouveau thème chaque lundi à la réinitialisation quotidienne, contribution de t3sco. Explorez les mirages des autres joueurs, moddés ou Vanilla, essayez n'importe quel mirage Vanilla en un geste, aimez ou enregistrez vos favoris, rangez tous vos mirages dans une garde-robe et participez au concours hebdomadaire pour gagner des gils, des Aether Coin, un cadre et un badge",
   "changelog.r1400.36": "Ajout d'un mode Écran à Appareil photo qui capture toute la fenêtre du jeu, le téléphone s'écartant et lançant un compte à rebours avant, contribution de t3sco",

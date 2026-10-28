@@ -272,6 +272,7 @@ internal sealed partial class MachineCabinet
 
     private void Consume(CasinoStage stage, in CasinoStageFrame frame)
     {
+        play.DropScratchResult();
         var round = play.TakeSpinResult();
         if (round is not null)
         {

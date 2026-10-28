@@ -1168,6 +1168,7 @@
   "gifs.consentDecline": "Şimdi değil",
   "gifs.setting": "KLIPY GIF'leri",
   "gifs.settingHint": "Chirper, Aethergram ve ChocoChat'te GIF ara ve gönderilerde, yorumlarda ve mesajlarda KLIPY GIF'lerini göster. Aramalar ve görseller doğrudan KLIPY'den yüklenir ve KLIPY IP adresini görür.",
+  "changelog.r1411.autoplay": "Otomatik oyunun bazen önceki tur gösterilmeden sonraki turu başlatması düzeltildi; bu yüzden ekranda tek bir sonuç görünürken yığınından iki bahis düşüyordu. Artık her oyun her sonucun gösterimi bitene kadar bekliyor",
   "changelog.r1410.maintenance": "Bakım ekranı eklendi: Aethernet planlı bakım için kapalıyken çevrim içi uygulamalar geri dönmesi beklenen zamana kadar bir geri sayım gösterir, Aethernet gerektirmeyen uygulamalar ise çalışmaya devam eder",
   "changelog.r1400.0": "Her pazartesi günlük sıfırlamada yeni bir temayla başlayan haftalık glamour yarışması Prism eklendi, katkı: t3sco. Diğer oyuncuların Modlu ya da Vanilla glamlarını keşfet, herhangi bir Vanilla glamı tek dokunuşla dene, sevdiklerini beğen ya da kaydet, tüm glamlarını bir gardıropta sakla ve gil, Aether Coin, bir çerçeve ve bir rozet kazanmak için haftalık yarışmaya katıl",
   "changelog.r1400.36": "Kamera'ya tüm oyun penceresini çeken Ekran modu eklendi; telefon önce kenara çekilip geri sayar, katkı: t3sco",
