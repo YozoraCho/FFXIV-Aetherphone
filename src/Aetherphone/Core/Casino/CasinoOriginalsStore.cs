@@ -39,7 +39,15 @@ internal sealed class CasinoOriginalsStore : IDisposable
         this.store = store;
     }
 
-    public bool InFlight => inFlight;
+    public bool InFlight => inFlight || AwaitingTake;
+
+    private bool AwaitingTake =>
+        Volatile.Read(ref minesResult) is not null
+        || Volatile.Read(ref diceResult) is not null
+        || Volatile.Read(ref limboResult) is not null
+        || Volatile.Read(ref kenoResult) is not null
+        || Volatile.Read(ref hiLoResult) is not null
+        || Volatile.Read(ref failedGame) != NoFailure;
 
     public CasinoMinesDto? TakeMines() => Interlocked.Exchange(ref minesResult, null);
 
@@ -285,7 +293,7 @@ internal sealed class CasinoOriginalsStore : IDisposable
         store.RefreshNow();
     }
 
-    private bool Ready() => !inFlight && session.IsSignedIn;
+    private bool Ready() => !InFlight && session.IsSignedIn;
 
     private string SittingId() => store.State?.Sitting?.Id ?? string.Empty;
 

@@ -25,7 +25,7 @@ internal sealed class CasinoDealerHoldemStore : IDisposable
         this.store = store;
     }
 
-    public bool InFlight => inFlight;
+    public bool InFlight => inFlight || failed || Volatile.Read(ref result) is not null;
 
     public CasinoDealerHoldemDto? TakeResult() => Interlocked.Exchange(ref result, null);
 
@@ -138,7 +138,7 @@ internal sealed class CasinoDealerHoldemStore : IDisposable
         store.RefreshNow();
     }
 
-    private bool Ready() => !inFlight && session.IsSignedIn;
+    private bool Ready() => !InFlight && session.IsSignedIn;
 
     private string SittingId() => store.State?.Sitting?.Id ?? string.Empty;
 
